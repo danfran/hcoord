@@ -1,0 +1,10 @@
+.cabal-sandbox/
+.idea/
+cabal.sandbox.config
+dist/
+**/*.iml
+.stack-work/
+x86_64-osx-ghc-*
+add-source-timestamps
+packages/
+ideaHaskellLib/
