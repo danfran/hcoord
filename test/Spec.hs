@@ -1,2 +1,7 @@
+import Test.Framework (defaultMain)
+import LatLng.Tests (latLngTests)
+
 main :: IO ()
-main = putStrLn "Test suite not yet implemented"
+main = defaultMain
+  [ latLngTests
+  ]
