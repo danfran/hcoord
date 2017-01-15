@@ -1,36 +1,26 @@
 module LatLng.Tests where
 
-import Test.HUnit (Assertion, assertEqual)
-import Test.Framework (Test, mutuallyExclusive, testGroup)
-import Test.Framework.Providers.HUnit (testCase)
+import Test.HUnit
+import HUnitExtensions
+import LatLng.Equals
 
 import Datum
 import LatLng
 import OSRef
+import qualified UTMRef
 
 latLngTests :: Test
-latLngTests = mutuallyExclusive $ testGroup "LatLng Conversion"
-        [ testToOSRef
-        ]
+latLngTests = TestList [TestLabel "osref" testToOSRef, TestLabel "utmref" testToUTMRef]
 
-
-type String = [Char]
 
 testToOSRef :: Test
-testToOSRef = testCase "Should Convert Latitude/Longitude to OS Grid Reference Using OSGB36" testConvert
-  where
-    testConvert :: Assertion
-    testConvert = do
-        let llp = LatLngPoint { latitude = 52.657570301933
-                              , longitude = 1.7179215806451
-                              , height = 0
-                              }
+testToOSRef = (toOSRef $ LatLng (LatLngPoint 52.657570301933 1.7179215806451 0) osgb36Datum) ~?= (OSRef 651409.902802228 313177.26991869917)
 
-            ll = LatLng llp osgb36Datum
-
-
-            expected = OSRef { easting = 651409.902802228
-                             , northing = 313177.26991869917
-                             }
-
-        assertEqual "osref" expected (to ll)
+testToUTMRef = TestList [
+--     foo -11 2 `shouldThrow` "Invalid parameter",
+    (toUTMRef $ LatLng (LatLngPoint 84.0 0.0 0.0) osgb36Datum) `shouldReturn` (UTMRef.UTMRef 465005.344 9329005.18 'X' 31)
+    , (toUTMRef $ LatLng (LatLngPoint (-80.0) 0.0 0.0) osgb36Datum) `shouldReturn` (UTMRef.UTMRef 441867.784 1116915.043 'C' 31)
+    , (toUTMRef $ LatLng (LatLngPoint 0.0 (-180.0) 0.0) osgb36Datum) `shouldReturn` (UTMRef.UTMRef 166021.443 0.0 'N' 1)
+    , (toUTMRef $ LatLng (LatLngPoint 0.0 180.0 0.0) osgb36Datum) `shouldReturn` (UTMRef.UTMRef 166021.443 0.0 'N' 1)
+    --  TODO Tests for regions around Norway and Svalbard
+    ]

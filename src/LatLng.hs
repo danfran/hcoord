@@ -5,6 +5,7 @@ import Control.Monad.Except
 import Datum
 import Ellipsoid
 import OSRef
+import qualified UTMRef
 
 data LatLngPoint = LatLngPoint { latitude :: Double
                                , longitude :: Double
@@ -26,12 +27,6 @@ data DMSPoint = DMSPoint { degrees :: Double
                          , seconds :: Double
                          }
 
-class Convert b where
-  from :: b -> LatLng
-  to :: LatLng -> b
-
-instance Convert OSRef where
-  to = toOSRef
 
 dmsToLatLng :: LatitudeDMS -> LongitudeDMS -> Datum -> Except String LatLng
 dmsToLatLng lat lng dtm = do
@@ -122,3 +117,68 @@ toOSRef latLng = do
     OSRef { northing = i + ii * (lambda - lambda0) ** 2 + iii * (lambda - lambda0) ** 4 + iiia * (lambda - lambda0) ** 6
           , easting = e0 + iv * (lambda - lambda0) + v * (lambda - lambda0) ** 3 + vi * (lambda - lambda0) ** 5
           }
+
+{-|
+  Convert latitude and longitude to a UTM reference.
+  If an attempt is made to convert a LatLng that falls outside the area covered by the UTM grid.
+  The UTM grid is only defined for latitudes south of 84&deg;N and north of 80&deg;S.
+-}
+toUTMRef :: LatLng -> Except String UTMRef.UTMRef
+toUTMRef (LatLng (LatLngPoint latitude longitude _) _) =
+  do
+     lt <- withExcept (const $ "Latitude (" ++ show latitude ++ ") falls outside the UTM grid.") (validateLatitude latitude)
+     let
+         utm_f0 = 0.9996 :: Double
+         a = semiMajorAxis wgs84Ellipsoid
+         eSquared = eccentricitySquared wgs84Ellipsoid
+
+         pifr = pi / 180.0 :: Double
+         latitudeRad = lt * pifr
+         ln = if longitude == 180.0 then (-180.0) else longitude
+         longitudeRad = ln * pifr
+         longitudeZone = evalLongitudeZone lt ln
+
+         longitudeOrigin = fromIntegral $ 6 * longitudeZone - 183 :: Double
+         longitudeOriginRad = longitudeOrigin * pifr
+
+         utmZone = UTMRef.getUTMLatitudeZoneLetter lt
+
+         ePrimeSquared = eSquared / (1 - eSquared)
+
+         n = a / sqrt (1 - eSquared * sin latitudeRad * sin latitudeRad)
+         t = tan latitudeRad ** 2
+         c = ePrimeSquared * cos latitudeRad ** 2
+         aa = cos latitudeRad * (longitudeRad - longitudeOriginRad)
+
+         eFoured = eSquared * eSquared
+         eSixed = eFoured * eSquared
+
+         m = a * ((1 - eSquared / 4 - 3 * eFoured / 64 - 5 * eSixed / 256) * latitudeRad
+             - (3 * eSquared / 8 + 3 * eFoured / 32 + 45 * eSixed / 1024) * sin (2 * latitudeRad)
+             + (15 * eFoured / 256 + 45 * eSixed / 1024) * sin (4 * latitudeRad)
+             - (35 * eSixed / 3072) * sin (6 * latitudeRad))
+
+         utmEasting = (utm_f0 * n * (aa + (1 - t + c) * aa ** 3 / 6
+                      + (5 - 18 * t + t * t + 72 * c - 58 * ePrimeSquared) * aa ** 5.0 / 120) + 500000.0)
+
+         -- Adjust for the southern hemisphere
+         utmNorthingAdj = if (lt < 0) then 10000000.0 else 0.0
+         utmNorthing = (utm_f0 * (m + n * tan latitudeRad * (aa * aa / 2 + (5 - t + 9 * c + 4 * c * c) * aa ** 4.0 / 24
+                       + (61 - 58 * t + t * t + 600 * c - 330 * ePrimeSquared) * aa ** 6.0 / 720))) + utmNorthingAdj
+
+     pure $ UTMRef.UTMRef utmEasting utmNorthing utmZone longitudeZone
+     where
+        validateLatitude :: Double -> Except String Double
+        validateLatitude lat
+          | lat < -80.0 || lat > 84.0 = throwError "Invalid latitude"
+          | lat == 180.0 = pure (-180.0)
+          | otherwise = pure lat
+
+        evalLongitudeZone :: Double -> Double -> Int
+        evalLongitudeZone lat lng
+          | lat >= 56.0 && lat < 64.0 && lng >= 3.0 && lng < 12.0 = 32 -- Special zone for Norway
+          | lat >= 72.0 && lat < 84.0 && lng >= 0.0 && lng < 9.0 = 31 -- Special zones for Svalbard
+          | lat >= 72.0 && lat < 84.0 && lng >= 9.0 && lng < 21.0 = 33
+          | lat >= 72.0 && lat < 84.0 && lng >= 21.0 && lng < 33.0 = 35
+          | lat >= 72.0 && lat < 84.0 && lng >= 33.0 && lng < 42.0 = 37
+          | otherwise = fromIntegral $ floor (lng / 6.0 + 30.0) + 1 :: Int

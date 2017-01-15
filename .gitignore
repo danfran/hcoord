@@ -8,3 +8,5 @@ x86_64-osx-ghc-*
 add-source-timestamps
 packages/
 ideaHaskellLib/
+/JAVA/
+/cabal.config

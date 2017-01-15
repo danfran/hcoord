@@ -1,7 +1,5 @@
-import Test.Framework (defaultMain)
+import Test.HUnit
 import LatLng.Tests (latLngTests)
 
-main :: IO ()
-main = defaultMain
-  [ latLngTests
-  ]
+main :: IO Counts
+main = runTestTT latLngTests
