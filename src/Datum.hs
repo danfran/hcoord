@@ -51,7 +51,7 @@ data Datum = Datum { name :: String -- ^ The name of this Datum.
                      WGS84 datum.
                    -}
                    , rz :: Double
-                   }
+                   } deriving (Eq, Show)
 
 -- instance Show Datum where
 --   show Datum{name = n, ellipsoid = ell, dx = dx, dy = dy, dz = dz,

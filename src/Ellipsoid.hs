@@ -6,7 +6,7 @@ data Ellipsoid =
             , semiMinorAxis :: Double -- ^ Semi minor axis.
             , eccentricitySquared :: Double -- ^ Eccentricity squared.
             , flattening :: Double -- ^ Flattening.
-            }
+            } deriving (Eq)
 
 -- | Parameters to build Ellipsoid.
 data EllipsoidParams = SemiMajMinAxises Double Double -- ^ Semi major and semi minor axises.

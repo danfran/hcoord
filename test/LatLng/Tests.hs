@@ -10,7 +10,11 @@ import OSRef
 import qualified UTMRef
 
 latLngTests :: Test
-latLngTests = TestList [TestLabel "osref" testToOSRef, TestLabel "utmref" testToUTMRef]
+latLngTests = TestList [
+    TestLabel "osref" testToOSRef
+    , TestLabel "utmref" testToUTMRef
+    , TestLabel "wgs84" testToWGS84
+    ]
 
 
 testToOSRef :: Test
@@ -24,3 +28,6 @@ testToUTMRef = TestList [
     , (toUTMRef $ LatLng (LatLngPoint 0.0 180.0 0.0) osgb36Datum) `shouldReturn` (UTMRef.UTMRef 166021.443 0.0 'N' 1)
     --  TODO Tests for regions around Norway and Svalbard
     ]
+
+testToWGS84 :: Test
+testToWGS84 = (toWGS84 $ LatLng (LatLngPoint 52.657570301933 1.7179215806451 0) osgb36Datum) ~?= LatLng (LatLngPoint 52.65716471196846 1.7197915435062723 0) osgb36Datum

@@ -10,11 +10,11 @@ import qualified UTMRef
 data LatLngPoint = LatLngPoint { latitude :: Double
                                , longitude :: Double
                                , height :: Double
-                               }
+                               } deriving (Show)
 
 data LatLng = LatLng { point :: LatLngPoint
                      , datum :: Datum
-                     }
+                     } deriving (Show)
 
 data LatitudeDMS = North DMSPoint -- ^ Latitude is north of the equator.
                    | South DMSPoint -- ^ Latitude is south of the equator.
@@ -67,6 +67,9 @@ latLng lat lng h dtm = do
 
 toRadians :: Double -> Double
 toRadians d = d / 180 * pi
+
+toDegrees :: Double -> Double
+toDegrees a = a * 180.0 / pi
 
 sinSquared :: Double -> Double
 sinSquared phi = sin phi ** 2
@@ -182,3 +185,43 @@ toUTMRef (LatLng (LatLngPoint latitude longitude _) _) =
           | lat >= 72.0 && lat < 84.0 && lng >= 21.0 && lng < 33.0 = 35
           | lat >= 72.0 && lat < 84.0 && lng >= 33.0 && lng < 42.0 = 37
           | otherwise = fromIntegral $ floor (lng / 6.0 + 30.0) + 1 :: Int
+
+-- | Convert this LatLng from the OSGB36 datum to the WGS84 datum using an approximate Helmert transformation.
+toWGS84 :: LatLng -> LatLng
+toWGS84 (LatLng (LatLngPoint latitude longitude height) datum) = do
+  let
+      a = semiMajorAxis wgs84Ellipsoid
+      eSquared = eccentricitySquared wgs84Ellipsoid
+      phi = toRadians latitude
+      lambda = toRadians longitude
+      v = a / (sqrt(1 - eSquared * sinSquared phi))
+      x = v * cos phi * cos lambda
+      y = v * cos phi * sin lambda
+      z = (1 - eSquared) * v * sin phi
+
+      tx = -446.448 :: Double
+      -- ty : Incorrect value in v1.0 (-124.157). Corrected in v1.1.
+      ty = 125.157 :: Double
+      tz = -542.060 :: Double
+      s = 0.0000204894 :: Double
+      rx = toRadians (-0.00004172222) :: Double
+      ry = toRadians (-0.00006861111) :: Double
+      rz = toRadians (-0.00023391666) :: Double
+
+      xB = tx + (x * (1 + s)) + (-rx) * y + ry * z
+      yB = ty + rz * x + (y * (1 + s)) + (-rx) * z
+      zB = tz + (-ry) * x + rx * y + (z * (1 + s))
+
+      a2 = semiMajorAxis airy1830Ellipsoid
+      eSquared2 = eccentricitySquared airy1830Ellipsoid
+
+      p = sqrt (xB ** 2 + yB ** 2)
+      phiN = atan(zB / (p * (1 - eSquared2)))
+
+      calcPhiN = last $ take 10 $ iterate (calcPhiN' zB eSquared2 a2 p) phiN
+  LatLng (LatLngPoint (toDegrees calcPhiN) (toDegrees $ atan (yB / xB)) height) datum
+  where
+    calcPhiN' :: Double -> Double -> Double -> Double -> Double -> Double
+    calcPhiN' zB eSquared2 a2 p phiN = do
+      let v = a2 / (sqrt (1 - eSquared2 * sinSquared phiN))
+      atan $ (zB + eSquared2 * v * sin phiN) / p
