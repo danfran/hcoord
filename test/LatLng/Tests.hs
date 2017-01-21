@@ -14,6 +14,7 @@ latLngTests = TestList [
     TestLabel "osref" testToOSRef
     , TestLabel "utmref" testToUTMRef
     , TestLabel "wgs84" testToWGS84
+    , TestLabel "datum" testToDatum
     ]
 
 
@@ -31,3 +32,9 @@ testToUTMRef = TestList [
 
 testToWGS84 :: Test
 testToWGS84 = (toWGS84 $ LatLng (LatLngPoint 52.657570301933 1.7179215806451 0) osgb36Datum) ~?= LatLng (LatLngPoint 52.65716471196846 1.7197915435062723 0) osgb36Datum
+
+testToDatum = TestList [
+    (toDatum (LatLng (LatLngPoint 52.657570301933156 1.717921580645096 0) wgs84Datum) osgb36Datum) ~?= LatLng (LatLngPoint 52.65716468040487 1.7197915435025186 0) wgs84Datum
+    ,(toDatum (LatLng (LatLngPoint 52.65716468040487 1.7197915435025186 0) osgb36Datum) wgs84Datum) ~?= LatLng (LatLngPoint 52.65716468040487 1.7197915435025186 0) osgb36Datum
+    ,(toDatum (LatLng (LatLngPoint 52.657570301933156 1.717921580645096 0) wgs84Datum) wgs84Datum) ~?= LatLng (LatLngPoint 52.657570301933156 1.717921580645096 0) wgs84Datum
+    ]
