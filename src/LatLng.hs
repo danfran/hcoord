@@ -309,14 +309,14 @@ toOSGB36 (LatLng (LatLngPoint latitude longitude height) datum) = do
 
 -- | Calculate the surface distance in kilometres from this LatLngPoint to the given LatLngPoint.
 distance :: LatLngPoint -> LatLngPoint -> Double
-distance from to = do
+distance (LatLngPoint latitudeFrom longitudeFrom _) (LatLngPoint latitudeTo longitudeTo _) = do
   let
       er = 6366.707 :: Double
-      latFrom = toRadians $ latitude from
-      latTo = toRadians $ latitude to
-      lngFrom = toRadians $ longitude from
-      lngTo = toRadians $ longitude to
-  acos (sin(latFrom) * sin(latTo) + cos(latFrom) * cos(latTo) * cos(lngTo - lngFrom)) * er
+      latFrom = toRadians latitudeFrom
+      latTo = toRadians latitudeTo
+      lngFrom = toRadians longitudeFrom
+      lngTo = toRadians longitudeTo
+  acos (sin latFrom * sin latTo + cos latFrom * cos latTo * cos (lngTo - lngFrom)) * er
 
 
 -- | Calculate the surface distance in miles from this LatLngPoint to the given LatLngPoint.
