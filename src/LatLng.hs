@@ -305,3 +305,20 @@ toOSGB36 (LatLng (LatLngPoint latitude longitude height) datum) = do
 
      calcPhiN = last $ take 10 $ iterate (calcPhiN' zB eSquared2 a2 p) phiN
  LatLng (LatLngPoint (toDegrees calcPhiN) (toDegrees $ atan (yB / xB)) height) datum
+
+
+-- | Calculate the surface distance in kilometres from this LatLngPoint to the given LatLngPoint.
+distance :: LatLngPoint -> LatLngPoint -> Double
+distance from to = do
+  let
+      er = 6366.707 :: Double
+      latFrom = toRadians $ latitude from
+      latTo = toRadians $ latitude to
+      lngFrom = toRadians $ longitude from
+      lngTo = toRadians $ longitude to
+  acos (sin(latFrom) * sin(latTo) + cos(latFrom) * cos(latTo) * cos(lngTo - lngFrom)) * er
+
+
+-- | Calculate the surface distance in miles from this LatLngPoint to the given LatLngPoint.
+distanceMiles :: LatLngPoint -> LatLngPoint -> Double
+distanceMiles from to = (distance from to) / 1.609344

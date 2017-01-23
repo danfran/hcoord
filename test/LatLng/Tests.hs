@@ -16,6 +16,8 @@ latLngTests = TestList [
     , TestLabel "wgs84" testToWGS84
     , TestLabel "datum" testToDatum
     , TestLabel "osgb36" testToOSGB36
+    , TestLabel "distance" testDistance
+    , TestLabel "distance miles" testDistanceMiles
     ]
 
 
@@ -42,3 +44,9 @@ testToDatum = TestList [
 
 testToOSGB36 :: Test
 testToOSGB36 = (toOSGB36 $ LatLng (LatLngPoint 52.657570301933 1.7179215806451 0) osgb36Datum) ~?= LatLng (LatLngPoint 52.65716471196846 1.7197915435062723 0) osgb36Datum
+
+testDistance :: Test
+testDistance = (distance (LatLngPoint 40.718119 (-73.995667) 0) (LatLngPoint 51.499981 (-0.125313) 0)) ~?= 5565.842734813126
+
+testDistanceMiles :: Test
+testDistanceMiles = (distanceMiles (LatLngPoint 40.718119 (-73.995667) 0) (LatLngPoint 51.499981 (-0.125313) 0)) ~?= 3458.4543359363356
