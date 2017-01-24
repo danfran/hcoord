@@ -18,6 +18,7 @@ latLngTests = TestList [
     , TestLabel "osgb36" testToOSGB36
     , TestLabel "distance" testDistance
     , TestLabel "distance miles" testDistanceMiles
+    , TestLabel "latitude degrees" testLatitudeDegrees
     ]
 
 
@@ -50,3 +51,11 @@ testDistance = (distance (LatLngPoint 40.718119 (-73.995667) 0) (LatLngPoint 51.
 
 testDistanceMiles :: Test
 testDistanceMiles = (distanceMiles (LatLngPoint 40.718119 (-73.995667) 0) (LatLngPoint 51.499981 (-0.125313) 0)) ~?= 3458.4543359363356
+
+testLatitudeDegrees = TestList [
+    (latitudeDegrees $ LatLngPoint 0 0 0) ~?= 0
+    , (latitudeDegrees $ LatLngPoint 10 0 0) ~?= 10
+    , (latitudeDegrees $ LatLngPoint (-10) 0 0) ~?= -10
+    , (latitudeDegrees $ LatLngPoint 10.5 0 0) ~?= 10
+    , (latitudeDegrees $ LatLngPoint (-10.5) 0 0) ~?= -10
+    ]

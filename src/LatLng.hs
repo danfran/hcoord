@@ -322,3 +322,10 @@ distance (LatLngPoint latitudeFrom longitudeFrom _) (LatLngPoint latitudeTo long
 -- | Calculate the surface distance in miles from this LatLngPoint to the given LatLngPoint.
 distanceMiles :: LatLngPoint -> LatLngPoint -> Double
 distanceMiles from to = (distance from to) / 1.609344
+
+
+latitudeDegrees :: LatLngPoint -> Int
+latitudeDegrees (LatLngPoint l _ _) = do
+  let deg = floor l
+  case l of _ | l < 0 && (l - fromIntegral deg) /= 0 -> (deg :: Int) + 1
+              | otherwise -> deg :: Int
