@@ -329,3 +329,12 @@ latitudeDegrees (LatLngPoint l _ _) = do
   let deg = floor l
   case l of _ | l < 0 && (l - fromIntegral deg) /= 0 -> (deg :: Int) + 1
               | otherwise -> deg :: Int
+
+
+latitudeMinutes :: LatLngPoint -> Int
+latitudeMinutes (LatLngPoint l _ _) = do
+  let deg = floor l
+      minx = (l - fromIntegral deg) :: Double
+      min | l < 0 && minx /= 0 = 1 - minx
+          | otherwise = minx
+  floor (60 * min) :: Int

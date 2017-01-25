@@ -19,6 +19,7 @@ latLngTests = TestList [
     , TestLabel "distance" testDistance
     , TestLabel "distance miles" testDistanceMiles
     , TestLabel "latitude degrees" testLatitudeDegrees
+    , TestLabel "latitude minutes" testLatitudeMinutes
     ]
 
 
@@ -58,4 +59,15 @@ testLatitudeDegrees = TestList [
     , (latitudeDegrees $ LatLngPoint (-10) 0 0) ~?= -10
     , (latitudeDegrees $ LatLngPoint 10.5 0 0) ~?= 10
     , (latitudeDegrees $ LatLngPoint (-10.5) 0 0) ~?= -10
+    ]
+
+
+testLatitudeMinutes = TestList [
+    (latitudeMinutes $ LatLngPoint 0 0 0) ~?= 0
+    , (latitudeMinutes $ LatLngPoint 10 0 0) ~?= 0
+    , (latitudeMinutes $ LatLngPoint (-10) 0 0) ~?= 0
+    , (latitudeMinutes $ LatLngPoint 10.25 0 0) ~?= 15
+    , (latitudeMinutes $ LatLngPoint (-10.25) 0 0) ~?= 15
+    , (latitudeMinutes $ LatLngPoint 10.257 0 0) ~?= 15
+    , (latitudeMinutes $ LatLngPoint (-10.257) 0 0) ~?= 15
     ]
