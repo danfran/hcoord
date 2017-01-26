@@ -338,3 +338,12 @@ latitudeMinutes (LatLngPoint l _ _) = do
       min | l < 0 && minx /= 0 = 1 - minx
           | otherwise = minx
   floor (60 * min) :: Int
+
+
+latitudeSeconds :: LatLngPoint -> Double
+latitudeSeconds (LatLngPoint l _ _) = do
+  let deg = floor l
+      minx = (l - fromIntegral deg) :: Double
+      min | l < 0 && minx /= 0 = 1 - minx
+          | otherwise = minx
+  60 * (60 * min - fromIntegral (floor (60 * min)))
