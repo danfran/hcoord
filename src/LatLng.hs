@@ -324,15 +324,24 @@ distanceMiles :: LatLngPoint -> LatLngPoint -> Double
 distanceMiles from to = (distance from to) / 1.609344
 
 
-latitudeDegrees :: LatLngPoint -> Int
-latitudeDegrees (LatLngPoint l _ _) = do
+latitudeDegrees, longitudeDegrees :: LatLngPoint -> Int
+latitudeDegrees (LatLngPoint l _ _) = calcDegrees l
+longitudeDegrees (LatLngPoint _ l _) = calcDegrees l
+
+calcDegrees :: Double -> Int
+calcDegrees l = do
   let deg = floor l
-  case l of _ | l < 0 && (l - fromIntegral deg) /= 0 -> (deg :: Int) + 1
+      minx = (l - fromIntegral deg) :: Double
+  case l of _ | l < 0 && minx /= 0 -> (deg :: Int) + 1
               | otherwise -> deg :: Int
 
 
-latitudeMinutes :: LatLngPoint -> Int
-latitudeMinutes (LatLngPoint l _ _) = do
+latitudeMinutes, longitudeMinutes :: LatLngPoint -> Int
+latitudeMinutes (LatLngPoint l _ _) = calcMinutes l
+longitudeMinutes (LatLngPoint _ l _) = calcMinutes l
+
+calcMinutes :: Double -> Int
+calcMinutes l = do
   let deg = floor l
       minx = (l - fromIntegral deg) :: Double
       min | l < 0 && minx /= 0 = 1 - minx
@@ -340,8 +349,12 @@ latitudeMinutes (LatLngPoint l _ _) = do
   floor (60 * min) :: Int
 
 
-latitudeSeconds :: LatLngPoint -> Double
-latitudeSeconds (LatLngPoint l _ _) = do
+latitudeSeconds, longitudeSeconds :: LatLngPoint -> Double
+latitudeSeconds (LatLngPoint l _ _) = calcSeconds l
+longitudeSeconds (LatLngPoint _ l _) = calcSeconds l
+
+calcSeconds :: Double -> Double
+calcSeconds l = do
   let deg = floor l
       minx = (l - fromIntegral deg) :: Double
       min | l < 0 && minx /= 0 = 1 - minx
