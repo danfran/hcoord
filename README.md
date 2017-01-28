@@ -1,6 +1,5 @@
 # HCoord
 
-## Forward
 Note that this repo is a _translation_ of the 2006 [Jcoord](http://www.jstott.me.uk/jcoord) project to Haskell.
 
 ## Original Project Homepage ##
