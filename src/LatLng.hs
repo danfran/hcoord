@@ -49,8 +49,8 @@ dmsToLatLng lat lng dtm = do
           | otherwise = pure (cardinal * (d + m / 60.0 + s / 3600.0))
 
 
-latLng :: Double -> Double -> Double -> Datum -> Except String LatLng
-latLng lat lng h dtm = do
+mkLatLng :: Double -> Double -> Double -> Datum -> Except String LatLng
+mkLatLng lat lng h dtm = do
   lt <- withExcept (const $ "Latitude (" ++ show lat ++ ") is invalid. Must be between -90.0 and 90.0 inclusive.") (validateLatitude lat)
   ln <- withExcept (const $ "Longitude (" ++ show lng ++ ") is invalid. Must be between -180.0 and 180.0 inclusive.") (validateLongitude lng)
   let p = LatLngPoint { latitude = lt , longitude = ln, height = h }
@@ -127,7 +127,7 @@ toOSRef latLng = do
   The UTM grid is only defined for latitudes south of 84&deg;N and north of 80&deg;S.
 -}
 toUTMRef :: LatLng -> Except String UTMRef.UTMRef
-toUTMRef (LatLng (LatLngPoint latitude longitude _) _) =
+toUTMRef (LatLng (LatLngPoint latitude longitude _) datum) =
   do
      lt <- withExcept (const $ "Latitude (" ++ show latitude ++ ") falls outside the UTM grid.") (validateLatitude latitude)
      let
@@ -169,7 +169,7 @@ toUTMRef (LatLng (LatLngPoint latitude longitude _) _) =
          utmNorthing = (utm_f0 * (m + n * tan latitudeRad * (aa * aa / 2 + (5 - t + 9 * c + 4 * c * c) * aa ** 4.0 / 24
                        + (61 - 58 * t + t * t + 600 * c - 330 * ePrimeSquared) * aa ** 6.0 / 720))) + utmNorthingAdj
 
-     pure $ UTMRef.UTMRef utmEasting utmNorthing utmZone longitudeZone
+     pure $ UTMRef.UTMRef utmEasting utmNorthing utmZone longitudeZone datum
      where
         validateLatitude :: Double -> Except String Double
         validateLatitude lat
