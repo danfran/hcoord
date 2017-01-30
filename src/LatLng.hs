@@ -4,6 +4,7 @@ module LatLng where
 import Control.Monad.Except
 import Datum
 import Ellipsoid
+import MathExtension
 import OSRef
 import qualified UTMRef
 
@@ -34,7 +35,6 @@ dmsToLatLng lat lng dtm = do
   ln <- withExcept (const "Invalid longitude") (evalLongitude lng)
   let p = LatLngPoint { latitude = lt , longitude = ln, height = 0 }
   pure LatLng { point = p , datum = dtm }
-
   where evalLatitude :: LatitudeDMS -> Except String Double
         evalLatitude (North p) = dmsToLatLngPoint p 1
         evalLatitude (South p) = dmsToLatLngPoint p (-1)
@@ -65,23 +65,12 @@ mkLatLng lat lng h dtm = do
           | l < -180.0 || l > 180.0 = throwError "Invalid longitude"
           | otherwise = pure l
 
-toRadians :: Double -> Double
-toRadians d = d / 180 * pi
-
-toDegrees :: Double -> Double
-toDegrees a = a * 180.0 / pi
-
-sinSquared :: Double -> Double
-sinSquared phi = sin phi ** 2
-
-tanSquared :: Double -> Double
-tanSquared phi = tan phi ** 2
 
 {-|
   Convert latitude and longitude into an OSGB (Ordnance Survey of Great Britain) grid reference.
 -}
 toOSRef :: LatLng -> OSRef
-toOSRef latLng = do
+toOSRef (LatLng (LatLngPoint latitude longitude _) _) = do
     let osgb_f0 = 0.9996012717 :: Double
         n0 = -100000.0 :: Double
         e0 = 400000.0 :: Double
@@ -92,9 +81,8 @@ toOSRef latLng = do
         b = semiMinorAxis airy1830Ellipsoid
         eSquared = eccentricitySquared airy1830Ellipsoid
 
-        llp = point latLng
-        phi = toRadians $ latitude llp
-        lambda = toRadians $ longitude llp
+        phi = toRadians latitude
+        lambda = toRadians longitude
 
         n = (a - b) / (a + b)
         vc = a * osgb_f0 * (1.0 - eSquared * sinSquared phi) ** (-0.5)
