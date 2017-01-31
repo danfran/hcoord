@@ -1,5 +1,7 @@
+import Control.Monad
 import Test.HUnit
-import LatLng.Tests (latLngTests)
+import LatLng.Tests (latlngTests)
+import UTMRef.Tests (utmrefTests)
 
-main :: IO Counts
-main = runTestTT latLngTests
+main :: IO ()
+main = forM_ [ latlngTests, utmrefTests ] runTestTT

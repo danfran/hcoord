@@ -1,4 +1,4 @@
-module LatLng.Equals where
+module Equals where
 
 import UTMRef
 import LatLng
