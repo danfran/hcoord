@@ -21,25 +21,25 @@ data UTMRef = UTMRef { easting :: Double -- ^ Easting
   mean that the UTM reference is well-formed. This is because that valid
   values for the easting vary depending on the latitude.
 -}
-mkUTMRef :: Int -- ^ The longitude zone number
-         -> Char -- ^ The latitude zone character
-         -> Double -- ^ The easting in metres
+mkUTMRef :: Double -- ^ The easting in metres
          -> Double -- ^ The northing in metres
-         -> Datum
+         -> Char -- ^ The latitude zone character
+         -> Int -- ^ The longitude zone number
          -> Except String UTMRef -- | If any of the parameters are invalid. Be careful that a valid
                                  --   value for the easting does not necessarily mean that the UTM
                                  --   reference is well-formed. The current checks do not take into
                                  --   account the varying range of valid values for the easting for
                                  --   different latitudes.
-mkUTMRef lngZone latZone easting northing datum
+mkUTMRef easting northing latZone lngZone
   | lngZone < 1 || lngZone > 60 = throwError $ "Longitude zone (" ++ show lngZone ++ ") is not defined on the UTM grid."
   | latZone < 'C' || latZone > 'X' = throwError $ "Latitude zone (" ++ show latZone ++ ") is not defined on the UTM grid."
   | easting < 0.0 || easting > 1000000.0 = throwError $ "Easting (" ++ show easting ++ ") is not defined on the UTM grid."
   | northing < 0.0 || northing > 10000000.0 = throwError $ "Northing (" ++ show northing ++ ") is not defined on the UTM grid."
-  | otherwise = pure $ UTMRef easting northing latZone lngZone datum
+  | otherwise = pure $ UTMRef easting northing latZone lngZone wgs84Datum
+
 
 -- | Convert this UTM reference to a latitude and longitude.
-toLatLng :: UTMRef -> LatLngPoint
+toLatLng :: UTMRef -> Except String LatLng
 toLatLng (UTMRef east north ltz lnz datum) = do
   let
       utm_f0 = 0.9996 :: Double
@@ -59,7 +59,7 @@ toLatLng (UTMRef east north ltz lnz datum) = do
 
       phi1Rad = mu + (1.5 * e1 - 27 / 32 * e1 ** 3) * sin(2 * mu)
                 + (21 / 16 * e1 ** 2 - 55 / 32 * e1 ** 4)
-                * sin(4  * mu) + (151 / 96 * e1 ** 3) * sin(6  * mu)
+                * sin(4 * mu) + (151 / 96 * e1 ** 3) * sin(6 * mu)
 
       n = a / sqrt(1 - eSquared * sinSquared phi1Rad)
       t = tanSquared phi1Rad
@@ -69,15 +69,15 @@ toLatLng (UTMRef east north ltz lnz datum) = do
 
       latitude = (phi1Rad - (n * tan phi1Rad / r)
                  * (d * d / 2 - (5 + 3 * t + 10 * c - 4 * c ** 2 - 9 * ePrimeSquared)
-                 * d ** 4 / 24  + (61 + 90 * t + 298 * c + 45 * t ** 2
-                 - 252 * ePrimeSquared - 3  * c ** 2) * d ** 6 / 720)) * 180 / pi
+                 * d ** 4 / 24 + (61 + 90 * t + 298 * c + 45 * t ** 2
+                 - 252 * ePrimeSquared - 3 * c ** 2) * d ** 6 / 720)) * 180 / pi
 
       longitude = longitudeOrigin
                 + ((d - (1 + 2 * t + c) / 6 * d ** 3
                 + (5 - 2 * c + 28 * t - 3 * c ** 2 + 8 * ePrimeSquared + 24 * t ** 2)
                 * d ** 5 / 120) / cos phi1Rad) * 180 / pi
 
-  LatLngPoint latitude longitude 0
+  mkLatLng latitude longitude 0 wgs84Datum
 
 
 {-|
@@ -128,7 +128,7 @@ toUTMRef (LatLng (LatLngPoint latitude longitude _) datum) =
          utmNorthing = (utm_f0 * (m + n * tan latitudeRad * (aa * aa / 2 + (5 - t + 9 * c + 4 * c * c) * aa ** 4.0 / 24
                        + (61 - 58 * t + t * t + 600 * c - 330 * ePrimeSquared) * aa ** 6.0 / 720))) + utmNorthingAdj
 
-     pure $ UTMRef utmEasting utmNorthing utmZone longitudeZone datum
+     mkUTMRef utmEasting utmNorthing utmZone longitudeZone
      where
         validateLatitude :: Double -> Except String Double
         validateLatitude lat
