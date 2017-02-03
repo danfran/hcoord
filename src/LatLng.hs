@@ -7,53 +7,19 @@ import Ellipsoid
 import MathExtension
 import OSRef
 
-data LatLngPoint = LatLngPoint { latitude :: Double
-                               , longitude :: Double
-                               , height :: Double
-                               } deriving (Eq, Show)
 
-data LatLng = LatLng { point :: LatLngPoint
+data LatLng = LatLng { latitude :: Double
+                     , longitude :: Double
+                     , height :: Double
                      , datum :: Datum
                      } deriving (Show)
-
-data LatitudeDMS = North DMSPoint -- ^ Latitude is north of the equator.
-                   | South DMSPoint -- ^ Latitude is south of the equator.
-
-data LongitudeDMS = East DMSPoint -- ^ Longitude is east of the prime meridian.
-                    | West DMSPoint -- ^ Longitude is west of the prime meridian.
-
-data DMSPoint = DMSPoint { degrees :: Double
-                         , minutes :: Double
-                         , seconds :: Double
-                         }
-
-
-dmsToLatLng :: LatitudeDMS -> LongitudeDMS -> Datum -> Except String LatLng
-dmsToLatLng lat lng dtm = do
-  lt <- withExcept (const "Invalid latitude") (evalLatitude lat)
-  ln <- withExcept (const "Invalid longitude") (evalLongitude lng)
-  let p = LatLngPoint { latitude = lt , longitude = ln, height = 0 }
-  pure LatLng { point = p , datum = dtm }
-  where evalLatitude :: LatitudeDMS -> Except String Double
-        evalLatitude (North p) = dmsToLatLngPoint p 1
-        evalLatitude (South p) = dmsToLatLngPoint p (-1)
-
-        evalLongitude :: LongitudeDMS -> Except String Double
-        evalLongitude (East p) = dmsToLatLngPoint p 1
-        evalLongitude (West p) = dmsToLatLngPoint p (-1)
-
-        dmsToLatLngPoint :: DMSPoint -> Double -> Except String Double
-        dmsToLatLngPoint DMSPoint { degrees = d, minutes = m, seconds = s } cardinal
-          | d < 0.0 || m < 0.0 || s < 0.0 || d > 90.0 || m >= 60.0 || s >= 60.0 = throwError "Invalid point"
-          | otherwise = pure (cardinal * (d + m / 60.0 + s / 3600.0))
 
 
 mkLatLng :: Double -> Double -> Double -> Datum -> Except String LatLng
 mkLatLng lat lng h dtm = do
   lt <- withExcept (const $ "Latitude (" ++ show lat ++ ") is invalid. Must be between -90.0 and 90.0 inclusive.") (validateLatitude lat)
   ln <- withExcept (const $ "Longitude (" ++ show lng ++ ") is invalid. Must be between -180.0 and 180.0 inclusive.") (validateLongitude lng)
-  let p = LatLngPoint { latitude = lt , longitude = ln, height = h }
-  pure LatLng { point = p , datum = dtm }
+  pure LatLng { latitude = lt, longitude = ln, height = h, datum = dtm }
   where
         validateLatitude :: Double -> Except String Double
         validateLatitude l
@@ -69,7 +35,7 @@ mkLatLng lat lng h dtm = do
   Convert latitude and longitude into an OSGB (Ordnance Survey of Great Britain) grid reference.
 -}
 toOSRef :: LatLng -> OSRef
-toOSRef (LatLng (LatLngPoint latitude longitude _) _) = do
+toOSRef (LatLng latitude longitude _ _) = do
     let osgb_f0 = 0.9996012717 :: Double
         n0 = -100000.0 :: Double
         e0 = 400000.0 :: Double
@@ -117,7 +83,7 @@ calcPhiN' zB eSquared2 a2 p phiN = do
 
 -- | Convert this LatLng from the OSGB36 datum to the WGS84 datum using an approximate Helmert transformation.
 toWGS84 :: LatLng -> LatLng
-toWGS84 (LatLng (LatLngPoint latitude longitude height) datum) = do
+toWGS84 (LatLng latitude longitude height datum) = do
   let
       a = semiMajorAxis airy1830Ellipsoid
       eSquared = eccentricitySquared airy1830Ellipsoid
@@ -149,12 +115,11 @@ toWGS84 (LatLng (LatLngPoint latitude longitude height) datum) = do
       phiN = atan(zB / (p * (1 - eSquared2)))
 
       calcPhiN = last $ take 10 $ iterate (calcPhiN' zB eSquared2 a2 p) phiN
---   LatLng (LatLngPoint (xB) (yB) zB) datum
-  LatLng (LatLngPoint (toDegrees calcPhiN) (toDegrees $ atan (yB / xB)) height) datum
+  LatLng (toDegrees calcPhiN) (toDegrees $ atan (yB / xB)) height datum
 
 
 toDatum :: LatLng -> Datum -> LatLng
-toDatum ll@(LatLng (LatLngPoint latitude longitude height) datum) newDatum
+toDatum ll@(LatLng latitude longitude height datum) newDatum
   | datum /= wgs84Datum && newDatum /= wgs84Datum = toDatum ll wgs84Datum
   | newDatum == wgs84Datum = ll
   | otherwise = do
@@ -189,12 +154,12 @@ toDatum ll@(LatLng (LatLngPoint latitude longitude height) datum) newDatum
           phiN = atan (zB / (p * (1 - eSquared)))
 
           calcPhiN = last $ take 10 $ iterate (calcPhiN' zB eSquared2 a2 p) phiN
-      LatLng (LatLngPoint (toDegrees calcPhiN) (toDegrees $ atan (yB / xB)) height) datum
+      LatLng (toDegrees calcPhiN) (toDegrees $ atan (yB / xB)) height datum
 
 
 -- | Convert this LatLng from the WGS84 datum to the OSGB36 datum using an approximate Helmert transformation.
 toOSGB36 :: LatLng -> LatLng
-toOSGB36 (LatLng (LatLngPoint latitude longitude height) datum) = do
+toOSGB36 (LatLng latitude longitude height datum) = do
  let
      a = semiMajorAxis wgs84Ellipsoid
      eSquared = eccentricitySquared wgs84Ellipsoid
@@ -226,12 +191,12 @@ toOSGB36 (LatLng (LatLngPoint latitude longitude height) datum) = do
      phiN = atan(zB / (p * (1 - eSquared2)))
 
      calcPhiN = last $ take 10 $ iterate (calcPhiN' zB eSquared2 a2 p) phiN
- LatLng (LatLngPoint (toDegrees calcPhiN) (toDegrees $ atan (yB / xB)) height) datum
+ LatLng (toDegrees calcPhiN) (toDegrees $ atan (yB / xB)) height datum
 
 
 -- | Calculate the surface distance in kilometres from this LatLngPoint to the given LatLngPoint.
-distance :: LatLngPoint -> LatLngPoint -> Double
-distance (LatLngPoint latitudeFrom longitudeFrom _) (LatLngPoint latitudeTo longitudeTo _) = do
+distance :: LatLng -> LatLng -> Double
+distance (LatLng latitudeFrom longitudeFrom _ _) (LatLng latitudeTo longitudeTo _ _) = do
   let
       er = 6366.707 :: Double
       latFrom = toRadians latitudeFrom
@@ -242,13 +207,13 @@ distance (LatLngPoint latitudeFrom longitudeFrom _) (LatLngPoint latitudeTo long
 
 
 -- | Calculate the surface distance in miles from this LatLngPoint to the given LatLngPoint.
-distanceMiles :: LatLngPoint -> LatLngPoint -> Double
+distanceMiles :: LatLng -> LatLng -> Double
 distanceMiles from to = (distance from to) / 1.609344
 
 
-latitudeDegrees, longitudeDegrees :: LatLngPoint -> Int
-latitudeDegrees (LatLngPoint l _ _) = calcDegrees l
-longitudeDegrees (LatLngPoint _ l _) = calcDegrees l
+latitudeDegrees, longitudeDegrees :: LatLng -> Int
+latitudeDegrees (LatLng l _ _ _) = calcDegrees l
+longitudeDegrees (LatLng _ l _ _) = calcDegrees l
 
 calcDegrees :: Double -> Int
 calcDegrees l = do
@@ -258,9 +223,9 @@ calcDegrees l = do
               | otherwise -> deg :: Int
 
 
-latitudeMinutes, longitudeMinutes :: LatLngPoint -> Int
-latitudeMinutes (LatLngPoint l _ _) = calcMinutes l
-longitudeMinutes (LatLngPoint _ l _) = calcMinutes l
+latitudeMinutes, longitudeMinutes :: LatLng -> Int
+latitudeMinutes (LatLng l _ _ _) = calcMinutes l
+longitudeMinutes (LatLng _ l _ _) = calcMinutes l
 
 calcMinutes :: Double -> Int
 calcMinutes l = do
@@ -271,9 +236,9 @@ calcMinutes l = do
   floor (60 * min) :: Int
 
 
-latitudeSeconds, longitudeSeconds :: LatLngPoint -> Double
-latitudeSeconds (LatLngPoint l _ _) = calcSeconds l
-longitudeSeconds (LatLngPoint _ l _) = calcSeconds l
+latitudeSeconds, longitudeSeconds :: LatLng -> Double
+latitudeSeconds (LatLng l _ _ _) = calcSeconds l
+longitudeSeconds (LatLng _ l _ _) = calcSeconds l
 
 calcSeconds :: Double -> Double
 calcSeconds l = do

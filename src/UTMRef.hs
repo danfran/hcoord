@@ -86,7 +86,7 @@ toLatLng (UTMRef east north ltz lnz datum) = do
   The UTM grid is only defined for latitudes south of 84&deg;N and north of 80&deg;S.
 -}
 toUTMRef :: LatLng -> Except String UTMRef
-toUTMRef (LatLng (LatLngPoint latitude longitude _) datum) =
+toUTMRef (LatLng latitude longitude _ datum) =
   do
      lt <- withExcept (const $ "Latitude (" ++ show latitude ++ ") falls outside the UTM grid.") (validateLatitude latitude)
      let
