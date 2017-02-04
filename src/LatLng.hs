@@ -4,7 +4,7 @@ module LatLng where
 import Control.Monad.Except
 import Datum
 import Ellipsoid
-import MathExtension
+import MathExtensions
 import OSRef
 
 

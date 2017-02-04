@@ -1,10 +1,15 @@
 module Equals where
 
-import UTMRef
-import LatLng
 import Datum
+import ECEFRef
+import LatLng
+import UTMRef
 
 import Data.AEq
+
+instance Eq ECEFRef where
+    (ECEFRef x1 y1 z1 datum1) == (ECEFRef x2 y2 z2 datum2) =
+        (x1 ~== x2) && (y1 ~== y2) && (z1 ~== z2) && (datum1 == datum2)
 
 instance Eq UTMRef where
     (UTMRef easting1 northing1 latZone1 lngZone1 datum1) == (UTMRef easting2 northing2 latZone2 lngZone2 datum2) =

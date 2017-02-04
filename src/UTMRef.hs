@@ -5,7 +5,7 @@ import Control.Monad.Except
 import Datum
 import Ellipsoid
 import LatLng
-import MathExtension
+import MathExtensions
 
 data UTMRef = UTMRef { easting :: Double -- ^ Easting
                      , northing :: Double -- ^ Northing
