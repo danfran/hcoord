@@ -20,6 +20,7 @@ library
       DMS
       ECEFRef
       Ellipsoid
+      IrishRef
       LatLng
       MathExtensions
       OSRef
