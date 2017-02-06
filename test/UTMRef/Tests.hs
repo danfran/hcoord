@@ -8,7 +8,6 @@ import Datum
 import LatLng
 import UTMRef
 
-utmrefTests :: Test
 utmrefTests = TestList [
     TestLabel "utmref - to utmref" testToUTMRef
     , TestLabel "utmref - to latlng" testToLatLng
