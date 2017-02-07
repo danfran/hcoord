@@ -12,6 +12,9 @@ module IrishRef where
 import Control.Monad.Except
 import Data.Char
 import Datum
+import Ellipsoid
+import qualified LatLng as L
+import MathExtensions
 
 data IrishRef = IrishRef { easting :: Double -- ^ The easting in metres relative to the origin of the British National Grid.
                          , northing :: Double -- ^ The northing in metres relative to the origin of the British National Grid.
@@ -60,6 +63,55 @@ mkIrishRef' ref = do
   est <- withExcept (const "Invalid easting") (evalEasting $ fromIntegral (east + nx))
   nrt <- withExcept (const "Invalid northing") (evalNorthing $ fromIntegral (north + ny))
   pure IrishRef { easting = est, northing = nrt, datum = ireland1965Datum }
+
+
+mkIrishRef'' :: L.LatLng -> Except String IrishRef
+mkIrishRef'' (L.LatLng latitude longitude height _) = do
+  let
+      n0 = falseOriginNorthing
+      e0 = falseOriginEasting
+      phi0 = toRadians falseOriginLatitude
+      lambda0 = toRadians falseOriginLongitude
+
+      el = ellipsoid ireland1965Datum
+      a = scaleFactor * semiMajorAxis el
+      b = scaleFactor * semiMinorAxis el
+      eSquared = eccentricitySquared el
+
+      phi = toRadians latitude
+      lambda = toRadians longitude
+      n = (a - b) / (a + b)
+
+      va = a * (1 - eSquared * sinSquared phi) ** (-0.5)
+      rho = a * (1 - eSquared) * (1 - eSquared * sinSquared phi) ** (-1.5)
+      etaSquared = va / rho - 1
+
+      m = b * (((1 + n + (1.25 * n ** 2) + (1.25 * n ** 3)) * (phi - phi0))
+          - ((3 * n + 3 * n ** 2 + (21.0 / 8.0 * n ** 3)) * sin (phi - phi0) * cos (phi + phi0))
+          + ((15.0 / 8.0 * n ** 2 + 15.0 / 8.0 * n ** 3) * sin(2.0 * (phi - phi0)) * cos(2.0 * (phi + phi0)))
+          - ((35.0 / 24.0 * n ** 3) * sin(3.0 * (phi - phi0)) * cos(3.0 * (phi + phi0))))
+
+      i = m + n0
+      ii = va / 2.0 * sin phi * cos phi
+      iii = va / 24.0 * sin phi * cos phi ** 3 * (5.0 - tanSquared phi + 9.0 * etaSquared)
+      iiia = va / 720.0 * sin phi * cos phi ** 5 * (61.0 - 58.0 * tanSquared phi + tan phi ** 4)
+      iv = va * cos(phi)
+      v = va / 6.0 * cos phi ** 3 * (va / rho - tanSquared phi)
+      vi = va / 120.0 * cos phi ** 5.0 * (5.0 - 18.0 * tanSquared phi + tan phi ** 4.0
+           + 14 * etaSquared - 58 * tanSquared phi * etaSquared)
+
+      north = i + ii * (lambda - lambda0) ** 2
+              + iii * (lambda - lambda0) ** 4
+              + iiia * (lambda - lambda0) ** 6
+
+      east = e0 + iv * (lambda - lambda0)
+             + v * (lambda - lambda0) ** 3
+             + vi * (lambda - lambda0) ** 5
+
+  est <- withExcept (const "Invalid easting") (evalEasting east)
+  nrt <- withExcept (const "Invalid northing") (evalNorthing north)
+  pure IrishRef { easting = est, northing = nrt, datum = ireland1965Datum }
+
 
 
 -- | Validate the easting.
