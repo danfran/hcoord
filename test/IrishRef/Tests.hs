@@ -21,9 +21,8 @@ testToIrishRef' = TestList [
     , (mkIrishRef' "G099361") `shouldReturn` (IrishRef 109900.0 336100.0 ireland1965Datum)
     ]
 
--- testToIrishRef'' :: Test
--- testToIrishRef'' = do
---   let ll = runExcept $ toLatLng (North (DMS 53 21 50.5441)) (West (DMS 6 20 52.9181)) etrf89Datum
---   let ll2 = toDatum (either (const $ LatLng 0 0 0 ireland1965Datum) id ll) ireland1965Datum
---   (mkIrishRef'' ll2) `shouldReturn` (IrishRef 309958.26 236141.93 ireland1965Datum)
--- (309897.9584798501, 236015.92470629397)
+testToIrishRef'' :: Test
+testToIrishRef'' = do
+  let ll = runExcept $ toLatLng (North (DMS 53 21 50.5441)) (West (DMS 6 20 52.9181)) etrf89Datum
+  let ll2 = toDatum (either (const $ LatLng 0 0 0 ireland1965Datum) id ll) ireland1965Datum
+  (mkIrishRef'' ll2) `shouldReturn` (IrishRef 309958.26 236141.93 ireland1965Datum)
