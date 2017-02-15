@@ -120,41 +120,44 @@ toWGS84 (LatLng latitude longitude height datum) = do
 
 toDatum :: LatLng -> Datum -> LatLng
 toDatum ll@(LatLng latitude longitude height datum) newDatum
-  | datum /= wgs84Datum && newDatum /= wgs84Datum = toDatum ll wgs84Datum
-  | newDatum == wgs84Datum = ll
-  | otherwise = do
-      let
-          a = semiMajorAxis $ ellipsoid $ datum
-          eSquared = eccentricitySquared $ ellipsoid $ datum
+  | datum /= wgs84Datum && newDatum /= wgs84Datum = mkToDatum ll newDatum 1
+  | datum == wgs84Datum && newDatum /= wgs84Datum = mkToDatum ll newDatum (-1)
+  | datum /= wgs84Datum && newDatum == wgs84Datum = ll
+  | otherwise = mkToDatum ll newDatum 1
+  where mkToDatum :: LatLng -> Datum -> Double -> LatLng
+        mkToDatum ll@(LatLng latitude longitude height datum) newDatum invert = do
+          let
+              a = semiMajorAxis $ ellipsoid $ datum
+              eSquared = eccentricitySquared $ ellipsoid $ datum
 
-          phi = toRadians latitude
-          lambda = toRadians longitude
-          v = a / sqrt(1 - eSquared * sinSquared phi)
-          x = (v + height) * cos phi * cos lambda
-          y = (v + height) * cos phi * sin lambda
-          z = ((1 - eSquared) * v + height) * sin phi
+              phi = toRadians latitude
+              lambda = toRadians longitude
+              v = a / sqrt(1 - eSquared * sinSquared phi)
+              x = (v + height) * cos phi * cos lambda
+              y = (v + height) * cos phi * sin lambda
+              z = ((1 - eSquared) * v + height) * sin phi
 
-          dx2 = (-1) * dx newDatum -- 446.448
-          dy2 = (-1) * dy newDatum -- -125.157
-          dz2 = (-1) * dz newDatum -- 542.060
-          ds2 = (-1) * ds newDatum / 1000000.0 -- -0.0000204894
-          rx2 = (-1) * toRadians (rx newDatum / 3600.0) -- toRadians(0.00004172222)
-          ry2 = (-1) * toRadians (ry newDatum / 3600.0) -- toRadians(0.00006861111)
-          rz2 = (-1) * toRadians (rz newDatum / 3600.0) -- toRadians(0.00023391666)
+              dx2 = invert * dx newDatum -- 446.448
+              dy2 = invert * dy newDatum -- -125.157
+              dz2 = invert * dz newDatum -- 542.060
+              ds2 = invert * ds newDatum / 1000000.0 -- -0.0000204894
+              rx2 = invert * toRadians (rx newDatum / 3600.0) -- toRadians(0.00004172222)
+              ry2 = invert * toRadians (ry newDatum / 3600.0) -- toRadians(0.00006861111)
+              rz2 = invert * toRadians (rz newDatum / 3600.0) -- toRadians(0.00023391666)
 
-          sc = 1 + ds2
-          xB = dx2 + sc * (x + (-rx2) * y + ry2 * z)
-          yB = dy2 + sc * (rz2 * x + y + (-rx2) * z)
-          zB = dz2 + sc * ((-ry2) * x + rx2 * y + z)
+              sc = 1 + ds2
+              xB = dx2 + sc * (x + (-rx2) * y + ry2 * z)
+              yB = dy2 + sc * (rz2 * x + y + (-rx2) * z)
+              zB = dz2 + sc * ((-ry2) * x + rx2 * y + z)
 
-          a2 = semiMajorAxis $ ellipsoid $ newDatum
-          eSquared2 = eccentricitySquared $ ellipsoid $ newDatum
+              a2 = semiMajorAxis $ ellipsoid $ newDatum
+              eSquared2 = eccentricitySquared $ ellipsoid $ newDatum
 
-          p = sqrt(xB ** 2 + yB ** 2)
-          phiN = atan (zB / (p * (1 - eSquared)))
+              p = sqrt(xB ** 2 + yB ** 2)
+              phiN = atan (zB / (p * (1 - eSquared2)))
 
-          calcPhiN = last $ take 10 $ iterate (calcPhiN' zB eSquared2 a2 p) phiN
-      LatLng (toDegrees calcPhiN) (toDegrees $ atan (yB / xB)) height datum
+              calcPhiN = last $ take 10 $ iterate (calcPhiN' zB eSquared2 a2 p) phiN
+          LatLng (toDegrees calcPhiN) (toDegrees $ atan (yB / xB)) height datum
 
 
 -- | Convert this LatLng from the WGS84 datum to the OSGB36 datum using an approximate Helmert transformation.

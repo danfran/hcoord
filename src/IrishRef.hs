@@ -78,8 +78,8 @@ mkIrishRef'' (L.LatLng latitude longitude height _) = do
       b = scaleFactor * semiMinorAxis el
       eSquared = eccentricitySquared el
 
-      phi = 0.9313586654828281 -- toRadians latitude
-      lambda = -0.11081064300572385 -- toRadians longitude
+      phi = toRadians latitude
+      lambda = toRadians longitude
       n = (a - b) / (a + b)
 
       va = a * (1 - eSquared * sinSquared phi) ** (-0.5)
@@ -110,7 +110,8 @@ mkIrishRef'' (L.LatLng latitude longitude height _) = do
 
   est <- withExcept (const "Invalid easting") (evalEasting east)
   nrt <- withExcept (const "Invalid northing") (evalNorthing north)
-  pure IrishRef { easting = va, northing = rho, datum = ireland1965Datum }
+--   pure IrishRef { easting = est, northing = nrt, datum = ireland1965Datum }
+  pure IrishRef { easting = east, northing = north, datum = ireland1965Datum }
 
 
 
@@ -128,8 +129,8 @@ evalNorthing n | n < 0.0 || n > 500000.0 = throwError ("Northing (" ++ show n ++
                | otherwise = pure (n)
 
 
--- ll = "(53.36292074510271, -6.348982169358832)"
--- ellipsoid = {ModifiedAiryEllipsoid@557} "[semi-major axis = 6377340.189, semi-minor axis = 6356034.447458584]"
+-- ll = {LatLng@535} "(53.36292074510271, -6.348982169358832)"
+-- ellipsoid = {ModifiedAiryEllipsoid@587} "[semi-major axis = 6377340.189, semi-minor axis = 6356034.447458584]"
 -- N0 = 250000.0
 -- E0 = 200000.0
 -- phi0 = 0.9337511498169663
@@ -137,8 +138,8 @@ evalNorthing n | n < 0.0 || n > 500000.0 = throwError ("Northing (" ++ show n ++
 -- a = 6377563.395906615
 -- b = 6356256.908664245
 -- eSquared = 0.00667054015
--- phi = 0.9313586654828281 ???
--- lambda = -0.11081064300572385 ???
+-- phi = 0.9313586654828281
+-- lambda = -0.11081064300572385
 -- E = 309897.9584798501
 -- N = 236015.92470629397
 -- n = 0.0016732203480774623
