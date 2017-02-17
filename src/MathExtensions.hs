@@ -16,3 +16,6 @@ cosCubed phi = cos phi ** 3
 
 tanSquared :: Double -> Double
 tanSquared phi = tan phi ** 2
+
+sec :: Double -> Double
+sec x = 1 / cos x

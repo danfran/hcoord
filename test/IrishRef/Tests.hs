@@ -6,13 +6,17 @@ import HUnitExtensions
 import Equals
 
 import Datum
-import DMS
+import qualified DMS
 import IrishRef
-import LatLng
+import qualified LatLng
+
+emptyLatLng = const $ LatLng.LatLng 0 0 0 ireland1965Datum
+emptyIrishRef = const $ IrishRef 0 0 ireland1965Datum
 
 irishrefTests = TestList [
     TestLabel "irishref - to irishref'" testToIrishRef'
     , TestLabel "irishref - to irishref''" testToIrishRef''
+    , TestLabel "irishref - to latlng''" testToLatLng
     ]
 
 testToIrishRef' = TestList [
@@ -23,6 +27,15 @@ testToIrishRef' = TestList [
 
 testToIrishRef'' :: Test
 testToIrishRef'' = do
-  let ll = runExcept $ toLatLng (North (DMS 53 21 50.5441)) (West (DMS 6 20 52.9181)) etrf89Datum
-  let ll2 = toDatum (either (const $ LatLng 0 0 0 ireland1965Datum) id ll) ireland1965Datum
+  let ll = runExcept $ DMS.toLatLng (DMS.North (DMS.DMS 53 21 50.5441)) (DMS.West (DMS.DMS 6 20 52.9181)) etrf89Datum
+  let ll2 = LatLng.toDatum (either emptyLatLng id ll) ireland1965Datum
   (mkIrishRef'' ll2) `shouldReturn` (IrishRef 309897.9584798501 236015.92470629397 ireland1965Datum)
+
+testToLatLng :: Test
+testToLatLng = do
+  let i = runExcept $ mkIrishRef 309958.26 236141.93
+  let ll = toLatLng (either emptyIrishRef id i)
+  TestList [
+    ll `shouldReturn` LatLng.LatLng 53.364040043415734 (-6.3480328719024754) 0 wgs84Datum
+    , LatLng.toDatum (either emptyLatLng id (runExcept ll)) etrf89Datum ~?= LatLng.LatLng 53.3640400556 (-6.34803286111) 0 wgs84Datum
+    ]
