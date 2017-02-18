@@ -115,6 +115,31 @@ mkIrishRef'' (L.LatLng latitude longitude height _) = do
 
 
 {-|
+  Return a String representation of this Irish grid reference using the
+  six-figure notation in the form X123456
+-}
+toSixFigureString :: IrishRef -> String
+toSixFigureString (IrishRef easting northing datum) = do
+  let
+      hundredkmE = floor (easting / 100000)
+      hundredkmN = floor (northing / 100000)
+
+      charOffset = 4 - hundredkmN
+      i = 65 + 5 * charOffset + hundredkmE
+      index = if (i >= 73) then i + 1 else i
+
+      e = floor ((easting - 100000 * fromIntegral hundredkmE) / 100)
+      n = floor ((northing - 100000 * fromIntegral hundredkmN) / 100)
+
+  chr index : compose e ++ compose n
+
+  where compose :: Int -> String
+        compose x = (if (x < 100) then "0" else "")
+                    ++ (if (x < 10) then "0" else "")
+                    ++ show x
+
+
+{-|
   Convert this Irish grid reference to a latitude/longitude pair using the
   Ireland 1965 datum. Note that, the LatLng object may need to be converted to the
   WGS84 datum depending on the application.
