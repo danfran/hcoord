@@ -10,8 +10,7 @@ import OSRef
 
 latlngTests :: Test
 latlngTests = TestList [
-    TestLabel "osref" testToOSRef
-    , TestLabel "wgs84" testToWGS84
+    TestLabel "wgs84" testToWGS84
     , TestLabel "datum" testToDatum
     , TestLabel "osgb36" testToOSGB36
     , TestLabel "distance" testDistance
@@ -20,9 +19,6 @@ latlngTests = TestList [
     , TestLabel "latitude minutes" testLatitudeMinutes
     , TestLabel "latitude seconds" testLatitudeSeconds
     ]
-
-testToOSRef :: Test
-testToOSRef = (toOSRef $ LatLng 52.657570301933 1.7179215806451 0 osgb36Datum) ~?= (OSRef 651409.902802228 313177.26991869917)
 
 testToWGS84 :: Test
 testToWGS84 = (toWGS84 $ LatLng 52.657570301933156 1.717921580645096 0 wgs84Datum) ~?= LatLng 52.657975812613955 1.716051773181802 0 wgs84Datum
