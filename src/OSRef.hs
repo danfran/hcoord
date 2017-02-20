@@ -1,6 +1,7 @@
 module OSRef where
 
 import Control.Monad.Except
+import Data.Char
 import Datum
 import Ellipsoid
 import qualified LatLng as L
@@ -18,12 +19,43 @@ data OSRef = OSRef { easting :: Double -- ^ The easting in metres relative to th
   to the origin of the British National Grid.
 -}
 mkOSRef :: Double -- ^ The easting in metres. Must be greater than or equal to 0.0 and less than 800000.0.
-              -> Double -- ^ The northing in metres. Must be greater than or equal to 0.0 and less than 1400000.0.
-              -> Except String OSRef -- ^ Throws an exception if either the easting or the northing are invalid.
+           -> Double -- ^ The northing in metres. Must be greater than or equal to 0.0 and less than 1400000.0.
+           -> Except String OSRef -- ^ Throws an exception if either the easting or the northing are invalid.
 mkOSRef e n = do
   est <- withExcept (const "Invalid easting") (evalEasting e)
   nrt <- withExcept (const "Invalid northing") (evalNorthing n)
   pure OSRef { easting = est, northing = nrt, datum = osgb36Datum }
+
+
+{-|
+  Take a string formatted as a six-figure OS grid reference (e.g. "TG514131")
+  and create a new OSRef object that represents that grid reference. The
+  first character must be H, N, S, O or T. The second character can be any
+  uppercase character from A through Z excluding I.
+-}
+mkOSRef' :: String -- ^ a String representing a six-figure Ordnance Survey grid reference in the form XY123456
+            -> Except String OSRef -- ^ Throws an exception if ref is not of the form XY123456.
+mkOSRef' ref = do
+  -- TODO 2006-02-05 : check format
+  let coords = findCoords (fromLabel ref 2) (fromLabel ref 5) (ref !! 0)
+               where
+                   fromLabel :: String -> Int -> Int
+                   fromLabel r p = (read (take 3 $ drop p r) :: Int) * 100
+
+                   findCoords :: Int -> Int -> Char -> (Int, Int)
+                   findCoords e n c
+                     | c == 'H' = (e, n + 1000000)
+                     | c == 'N' = (e, n + 500000)
+                     | c == 'O' = (e + 500000, n + 500000)
+                     | c == 'T' = (e + 500000, n)
+
+  let char2Ord = ord $ ref !! 1
+  let c2 = if (char2Ord > 73) then char2Ord - 66 else char2Ord - 65
+
+  let nx = c2 `mod` 5 * 100000
+  let ny = (4 - floor ((fromIntegral c2 :: Double) / 5)) * 100000
+
+  mkOSRef (fromIntegral (fst coords + nx)) (fromIntegral (snd coords + ny))
 
 
 {-|

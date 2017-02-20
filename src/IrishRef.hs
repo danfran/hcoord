@@ -60,9 +60,7 @@ mkIrishRef' ref = do
       nx = ((ch - 65) `mod` 5) * 100000
       ny = (4 - floor ((fromIntegral ch - 65) / 5)) * 100000
 
-  est <- withExcept (const "Invalid easting") (evalEasting $ fromIntegral (east + nx))
-  nrt <- withExcept (const "Invalid northing") (evalNorthing $ fromIntegral (north + ny))
-  pure IrishRef { easting = est, northing = nrt, datum = ireland1965Datum }
+  mkIrishRef (fromIntegral (east + nx)) (fromIntegral (north + ny))
 
 
 -- | Create an IrishRef object from the given latitude and longitude.
@@ -109,9 +107,7 @@ mkIrishRef'' (L.LatLng latitude longitude height _) = do
              + v * (lambda - lambda0) ** 3
              + vi * (lambda - lambda0) ** 5
 
-  est <- withExcept (const "Invalid easting") (evalEasting east)
-  nrt <- withExcept (const "Invalid northing") (evalNorthing north)
-  pure IrishRef { easting = est, northing = nrt, datum = ireland1965Datum }
+  mkIrishRef east north
 
 
 {-|

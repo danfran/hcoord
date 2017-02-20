@@ -11,6 +11,7 @@ import OSRef
 osrefTests :: Test
 osrefTests = TestList [
     TestLabel "osref - mk osref" testMkOSRef
+    , TestLabel "osref - mk osref'" testMkOSRef'
     , TestLabel "osref - to osref" testToOSRef
     ]
 
@@ -21,3 +22,6 @@ testMkOSRef = TestList [
 
 testToOSRef :: Test
 testToOSRef = (toOSRef $ LatLng 52.657570301933 1.7179215806451 0 osgb36Datum) `shouldReturn` (OSRef 651409.902802228 313177.26991869917 osgb36Datum)
+
+testMkOSRef' :: Test
+testMkOSRef' = (mkOSRef' "TG514131") `shouldReturn` (OSRef 651400.0 313100.0 osgb36Datum)
