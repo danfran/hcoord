@@ -12,6 +12,7 @@ data OSRef = OSRef { easting :: Double -- ^ The easting in metres relative to th
                    , datum :: Datum
                    } deriving (Eq, Show)
 
+data Precision = SixDigits | EightDigits
 
 {-|
   Create a new Ordnance Survey grid reference using a given easting and
@@ -100,6 +101,35 @@ toOSRef (L.LatLng latitude longitude _ _) = do
     mkOSRef
       (e0 + iv * (lambda - lambda0) + v * (lambda - lambda0) ** 3 + vi * (lambda - lambda0) ** 5)
       (i + ii * (lambda - lambda0) ** 2 + iii * (lambda - lambda0) ** 4 + iiia * (lambda - lambda0) ** 6)
+
+
+getOsRefWithPrecisionOf :: Precision -> OSRef -> String
+getOsRefWithPrecisionOf SixDigits (OSRef e n _) = evalOsRef 100 e n
+getOsRefWithPrecisionOf EightDigits (OSRef e n _) = evalOsRef 10 e n
+
+evalOsRef :: Double -> Double -> Double -> String
+evalOsRef precision easting northing = do
+  let
+      hundredkmE = floor (easting / 100000)
+      hundredkmN = floor (northing / 100000)
+
+      firstLetter
+        | hundredkmN < 5 = if (hundredkmE < 5) then 'S' else 'T'
+        | hundredkmN < 10 = if (hundredkmE < 5) then 'N' else 'O'
+        | otherwise = 'H'
+
+      i = 85 - 5 * (hundredkmN `mod` 5) + (hundredkmE `mod` 5)
+      secondLetter = chr $ if (i >= 73) then i + 1 else i
+
+      e = floor ((easting - 100000 * fromIntegral hundredkmE) / precision)
+      n = floor ((northing - 100000 * fromIntegral hundredkmN) / precision)
+
+  firstLetter : secondLetter : compose e ++ compose n
+
+  where compose :: Int -> String
+        compose x = (if (x < 100) then "0" else "")
+                    ++ (if (x < 10) then "0" else "")
+                    ++ show x
 
 
 -- | Validate the easting.
