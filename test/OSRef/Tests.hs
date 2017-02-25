@@ -14,6 +14,7 @@ osrefTests = TestList [
     , TestLabel "osref - mk osref'" testMkOSRef'
     , TestLabel "osref - to osref" testToOSRef
     , TestLabel "osref - to six digits" testGetOsRefWithSixDigitsPrecision
+    , TestLabel "osref - to latlng" testToLatLng
     ]
 
 testMkOSRef = TestList [
@@ -30,4 +31,8 @@ testMkOSRef' = (mkOSRef' "TG514131") `shouldReturn` (OSRef 651400.0 313100.0 osg
 testGetOsRefWithSixDigitsPrecision = TestList [
     (getOsRefWithPrecisionOf SixDigits (OSRef 651409.903 313177.270 osgb36Datum)) ~?= "TG514131"
     , (getOsRefWithPrecisionOf SixDigits (OSRef 651409.902802228 312769.3780136908 osgb36Datum)) ~?= "TG514127"
+    ]
+
+testToLatLng = TestList [
+    (toLatLng (OSRef 651409.903 313177.270 osgb36Datum))  `shouldReturn` (LatLng 52.657570301933156 1.717921580645096 0 wgs84Datum)
     ]

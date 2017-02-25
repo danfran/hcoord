@@ -12,7 +12,17 @@ data OSRef = OSRef { easting :: Double -- ^ The easting in metres relative to th
                    , datum :: Datum
                    } deriving (Eq, Show)
 
-data Precision = SixDigits | EightDigits
+data Precision = SixDigits -- ^ A six-figure representation this OSGB grid reference i.e XY123456
+                 | EightDigits -- ^ A eight-figure representation this OSGB grid reference i.e XY12345678
+
+
+scaleFactor, falseOriginLatitude, falseOriginLongitude, falseOriginEasting, falseOriginNorthing :: Double
+scaleFactor = 0.9996012717 -- OSGB_F0
+falseOriginLatitude = 49.0
+falseOriginLongitude = -2.0
+falseOriginEasting = 400000.0
+falseOriginNorthing = -100000.0
+
 
 {-|
   Create a new Ordnance Survey grid reference using a given easting and
@@ -130,6 +140,61 @@ evalOsRef precision easting northing = do
         compose x = (if (x < 100) then "0" else "")
                     ++ (if (x < 10) then "0" else "")
                     ++ show x
+
+
+{-|
+  Convert this OSGB grid reference to a latitude/longitude pair using the
+  OSGB36 datum. Note that, the LatLng object may need to be converted to the
+  WGS84 datum depending on the application.
+-}
+toLatLng :: OSRef
+            -> Except String L.LatLng -- ^ To represent OSGB grid reference using the OSGB36 datum.
+toLatLng (OSRef easting northing datum) = do
+  let
+      n0 = falseOriginNorthing
+      e0 = falseOriginEasting
+      phi0 = toRadians falseOriginLatitude
+      lambda0 = toRadians falseOriginLongitude
+
+      el = ellipsoid datum
+      a = semiMajorAxis el
+      b = semiMinorAxis el
+      eSquared = eccentricitySquared el
+
+      n = (a - b) / (a + b)
+      phiPrime = calcPhiPrime ((northing - n0) / (a * scaleFactor) + phi0) a b n phi0 n0 northing
+
+      va = a * scaleFactor * (1 - eSquared * sinSquared phiPrime) ** (-0.5)
+      rho = a * scaleFactor * (1 - eSquared) * (1 - eSquared * sinSquared phiPrime) ** (-1.5)
+      etaSquared = va / rho - 1
+
+      vii = tan phiPrime / (2 * rho * va)
+      viii = tan phiPrime / (24 * rho * va ** 3)
+             * (5 + 3 * tanSquared phiPrime + etaSquared - 9 * tanSquared phiPrime * etaSquared)
+      ix = tan phiPrime / (720 * rho * va ** 5)
+           * (61 + 90 * tanSquared phiPrime + 45 * tanSquared phiPrime ** 2)
+      x = sec phiPrime / va
+      xi = sec phiPrime / (6 * va ** 3) * (va / rho + 2 * tanSquared phiPrime)
+      xii = sec phiPrime / (120 * va ** 5)
+            * (5 + 28 * tanSquared phiPrime + 24 * tanSquared phiPrime ** 2)
+      xiia = sec phiPrime / (5040 * va ** 7)
+             * (61 + 662 * tanSquared phiPrime + 1320 * tanSquared phiPrime  ** 2
+             + 720 * tanSquared phiPrime ** 3)
+
+      phi = phiPrime - vii * (easting - e0) ** 2 + viii * (easting - e0) ** 4.0 - ix * (easting - e0) ** 6.0
+      lambda = lambda0 + x * (easting - e0) - xi * (easting - e0) ** 3.0 + xii * (easting - e0) ** 5.0 - xiia * (easting - e0) ** 7.0
+  L.mkLatLng (toDegrees phi) (toDegrees lambda) 0 wgs84Datum
+  where calcPhiPrime :: Double -> Double -> Double -> Double -> Double -> Double -> Double -> Double
+        calcPhiPrime phi a b n phi0 n0 northing = do
+          let m = b * scaleFactor
+                  * ((1 + n + 1.25 * n ** 2 + 1.25 * n ** 3) * (phi - phi0)
+                  - (3 * n + 3 * n ** 2 + 21.0 / 8.0 * n ** 3) * sin (phi - phi0) * cos (phi + phi0)
+                  + (15.0 / 8.0 * n ** 2 + 15.0 / 8.0 * n ** 3) * sin(2.0 * (phi - phi0)) * cos(2.0 * (phi + phi0))
+                  - (35.0 / 24.0 * n ** 3) * sin(3.0 * (phi - phi0)) * cos(3.0 * (phi + phi0)))
+              delta = northing - n0 - m
+              phiPrime = phi + delta / (a * scaleFactor)
+          if (delta >= 0.001) then calcPhiPrime phiPrime a b n phi0 n0 northing
+          else phiPrime
 
 
 -- | Validate the easting.
