@@ -6,12 +6,16 @@ import Data.Default
 import Datum
 import IrishRef
 import LatLng
+import UTMRef
 
 instance Default LatLng where
     def = LatLng 0 0 0 wgs84Datum
 
 instance Default IrishRef where
     def = IrishRef 0 0 ireland1965Datum
+
+instance Default UTMRef where
+    def = UTMRef 0 0 ' ' 0 wgs84Datum
 
 extract :: Default a => Except String a -> a
 extract ex = either (const def) id (runExcept ex)
