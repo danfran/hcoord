@@ -11,12 +11,14 @@ import UTMRef
 mgrsrefTests = TestList [
     TestLabel "mgrsref - to show with precision" testToShowWithPrecision
     , TestLabel "mgrsref - to show" testToMGRSRef
+    , TestLabel "mgrsref - to mkMGRSRef" testToMkMGRSRef
     ]
 
 
 testToShowWithPrecision = TestList [
     (showWithPrecision $ MGRSRef 10000 78000 'M' 'U' 32 'U' M1000 False wgs84Datum) M1 ~?= "32UMU1000078000"
     ]
+
 
 testToMGRSRef = TestList [
     (show $ toMGRSRef (extract $ mkUTMRef 443575.71 4349755.98 'S' 13) False) ~?= "13SDD4357649756"
@@ -32,4 +34,10 @@ testToMGRSRef = TestList [
     , (show $ toMGRSRef (extract $ mkUTMRef 800000.0 0.0 'N' 1) True) ~?= "01NHL0000000000"
     , (show $ toMGRSRef (extract $ mkUTMRef 199999.0 0.0 'N' 2) False) ~?= "02NJF9999900000"
     , (show $ toMGRSRef (extract $ mkUTMRef 199999.0 0.0 'N' 2) True) ~?= "02NJR9999900000"
+    ]
+
+
+testToMkMGRSRef = TestList [
+    (show $ extract $ mkMGRSRef 0 16300 'E' 'U' 10 'U' M1 False) ~?= "10UEU0000016300"
+    , (show $ extract $ mkMGRSRef 43575 49756 'D' 'D' 13 'S' M1 False) ~?= "13SDD4357549756"
     ]

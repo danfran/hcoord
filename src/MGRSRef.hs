@@ -63,11 +63,12 @@
 -}
 module MGRSRef where
 
+import Control.Monad.Except
 import Data.Char
 import Data.Fixed
 
 import Datum
-import UTMRef
+import qualified UTMRef as U
 
 data MGRSRef = MGRSRef { easting :: Int
                        , northing :: Int
@@ -136,10 +137,10 @@ showWithPrecision (MGRSRef easting northing eastingId northingId utmZoneNumber u
   International or WGS84 ellipsoids. It is assumed that the UTMRef object is
   valid.
 -}
-toMGRSRef :: UTMRef -- ^ UTM reference.
+toMGRSRef :: U.UTMRef -- ^ UTM reference.
              -> Bool -- ^ True if the parameters represent an MGRS reference using the Bessel 1841 ellipsoid; false is the parameters represent an MGRS reference using the GRS 1980, International or WGS84 ellipsoids.
              -> MGRSRef
-toMGRSRef (UTMRef easting northing latZone lngZone _) isBessel = do
+toMGRSRef (U.UTMRef easting northing latZone lngZone _) isBessel = do
   let
       set = (lngZone - 1) `mod` 6 + 1
 
@@ -155,3 +156,56 @@ toMGRSRef (UTMRef easting northing latZone lngZone _) isBessel = do
       nIdC = northingIds !! nId
 
   MGRSRef (round(easting) `mod` 100000) (round(northing) `mod` 100000) eIdC nIdC lngZone latZone M1 isBessel wgs84Datum
+
+
+mkMGRSRef :: Int -- ^ The easting in metres. Must be greater than or equal to 0.0 and less than 100000.
+             -> Int -- ^ The northing in metres. Must be greater than or equal to 0.0 and less than or equal to 500000.0.
+             -> Char -- ^ The character representing the 100,000km easting square.
+             -> Char -- ^ The character representing the 100,000km northing square.
+             -> Int -- ^ The UTM zone number representing the longitude.
+             -> Char -- ^ The UTM zone character representing the latitude.
+             -> Precision -- ^ The precision of the given easting and northing.
+             -> Bool -- ^ True if the parameters represent an MGRS reference using the Bessel 1841 ellipsoid; False is the parameters represent an MGRS reference using the GRS 1980, International or WGS84 ellipsoids.
+             -> Except String MGRSRef -- ^ Throws an exception if any of the given parameters are invalid. Note that the parameters are only checked for the range of values that they can take on. Being able to create an MGRSRef object does not necessarily imply that the reference is valid.
+mkMGRSRef e n eId nId un uc p b = do
+  est <- withExcept (const "Invalid easting") (evalEasting e)
+  nrt <- withExcept (const "Invalid northing") (evalNorthing n)
+  estId <- withExcept (const "Invalid eastingId") (evalEastingId eId)
+  nrtId <- withExcept (const "Invalid northingId") (evalNorthingId nId)
+  uzn <- withExcept (const "Invalid utmZoneNumber") (evalUtmZoneNumber un)
+  uzc <- withExcept (const "Invalid utmZoneChar") (evalUtmZoneChar uc)
+  pure MGRSRef { easting = est
+               , northing = nrt
+               , eastingId = estId
+               , northingId = nrtId
+               , utmZoneNumber = uzn
+               , utmZoneChar = uzc
+               , precision = p
+               , isBessel = b
+               , datum = wgs84Datum }
+
+
+evalEasting :: Int -> Except String Int
+evalEasting e | e < 0 || e > 99999 = throwError ("Invalid easting (" ++ show e ++ ")")
+              | otherwise = pure (e)
+
+evalNorthing :: Int -> Except String Int
+evalNorthing n | n < 0 || n > 99999 = throwError ("Invalid northing (" ++ show n ++ ")")
+               | otherwise = pure (n)
+
+evalUtmZoneNumber :: Int -> Except String Int
+evalUtmZoneNumber u | u < 1 || u > 60 = throwError ("Invalid utmZoneNumber (" ++ show u ++ ")")
+                    | otherwise = pure (u)
+
+evalUtmZoneChar :: Char -> Except String Char
+evalUtmZoneChar u | u < 'A' || u > 'Z' = throwError ("Invalid utmZoneChar (" ++ show u ++ ")")
+                  | otherwise = pure (u)
+
+evalEastingId :: Char -> Except String Char
+evalEastingId e | e < 'A' || e > 'Z' || e == 'I' || e == 'O' = throwError ("Invalid eastingId (" ++ show e ++ ")")
+                | otherwise = pure (e)
+
+evalNorthingId :: Char -> Except String Char
+evalNorthingId n | n < 'A' || n > 'Z' || n == 'I' || n == 'O' = throwError ("Invalid northingId (" ++ show n ++ ")")
+                 | otherwise = pure (n)
+
