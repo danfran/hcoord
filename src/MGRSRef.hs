@@ -66,6 +66,7 @@ module MGRSRef where
 import Control.Monad.Except
 import Data.Char
 import Data.Fixed
+import Text.Regex.PCRE
 
 import Datum
 import qualified UTMRef as U
@@ -79,7 +80,7 @@ data MGRSRef = MGRSRef { easting :: Int
                        , precision :: Precision
                        , isBessel :: Bool
                        , datum :: Datum
-                       }
+                       } deriving (Eq)
 
 
 data Precision = M1 -- ^ precision of 1m
@@ -87,6 +88,7 @@ data Precision = M1 -- ^ precision of 1m
                  | M100 -- ^ precision of 100m
                  | M1000 -- ^ precision of 1000m (1km)
                  | M10000  -- ^ precision of 10000m (10km)
+                 deriving (Eq)
 
 
 instance Enum Precision where
@@ -95,6 +97,11 @@ instance Enum Precision where
   fromEnum M100 = 100
   fromEnum M1000 = 1000
   fromEnum M10000 = 10000
+  toEnum 1 = M1
+  toEnum 10 = M10
+  toEnum 100 = M100
+  toEnum 1000 = M1000
+  toEnum 10000 = M10000
 
 
 -- | Northing characters
@@ -116,13 +123,13 @@ showWithPrecision (MGRSRef easting northing eastingId northingId utmZoneNumber u
       eastingR = easting `div` p
       northingR = northing `div` p
       padding = case precision of
+        M1 -> 5
         M10 -> 4
         M100 -> 3
         M1000 -> 2
         M10000 -> 1
-        _ -> 5
-      eastingRs = padWithZeros (show easting) padding
-      northingRs = padWithZeros (show northing) padding
+      eastingRs = padWithZeros (show eastingR) padding
+      northingRs = padWithZeros (show northingR) padding
       utmZonePadding = if (utmZoneNumber < 10) then "0" else ""
   utmZonePadding ++ show utmZoneNumber ++ [utmZoneChar] ++ [eastingId] ++ [northingId] ++ eastingRs ++ northingRs
   where padWithZeros :: String -> Int -> String
@@ -185,27 +192,99 @@ mkMGRSRef e n eId nId un uc p b = do
                , datum = wgs84Datum }
 
 
-evalEasting :: Int -> Except String Int
-evalEasting e | e < 0 || e > 99999 = throwError ("Invalid easting (" ++ show e ++ ")")
-              | otherwise = pure (e)
+  where evalEasting :: Int -> Except String Int
+        evalEasting e | e < 0 || e > 99999 = throwError ("Invalid easting (" ++ show e ++ ")")
+                      | otherwise = pure (e)
 
-evalNorthing :: Int -> Except String Int
-evalNorthing n | n < 0 || n > 99999 = throwError ("Invalid northing (" ++ show n ++ ")")
-               | otherwise = pure (n)
+        evalNorthing :: Int -> Except String Int
+        evalNorthing n | n < 0 || n > 99999 = throwError ("Invalid northing (" ++ show n ++ ")")
+                       | otherwise = pure (n)
 
-evalUtmZoneNumber :: Int -> Except String Int
-evalUtmZoneNumber u | u < 1 || u > 60 = throwError ("Invalid utmZoneNumber (" ++ show u ++ ")")
-                    | otherwise = pure (u)
+        evalUtmZoneNumber :: Int -> Except String Int
+        evalUtmZoneNumber u | u < 1 || u > 60 = throwError ("Invalid utmZoneNumber (" ++ show u ++ ")")
+                            | otherwise = pure (u)
 
-evalUtmZoneChar :: Char -> Except String Char
-evalUtmZoneChar u | u < 'A' || u > 'Z' = throwError ("Invalid utmZoneChar (" ++ show u ++ ")")
-                  | otherwise = pure (u)
+        evalUtmZoneChar :: Char -> Except String Char
+        evalUtmZoneChar u | u < 'A' || u > 'Z' = throwError ("Invalid utmZoneChar (" ++ show u ++ ")")
+                          | otherwise = pure (u)
 
-evalEastingId :: Char -> Except String Char
-evalEastingId e | e < 'A' || e > 'Z' || e == 'I' || e == 'O' = throwError ("Invalid eastingId (" ++ show e ++ ")")
-                | otherwise = pure (e)
+        evalEastingId :: Char -> Except String Char
+        evalEastingId e | e < 'A' || e > 'Z' || e == 'I' || e == 'O' = throwError ("Invalid eastingId (" ++ show e ++ ")")
+                        | otherwise = pure (e)
 
-evalNorthingId :: Char -> Except String Char
-evalNorthingId n | n < 'A' || n > 'Z' || n == 'I' || n == 'O' = throwError ("Invalid northingId (" ++ show n ++ ")")
-                 | otherwise = pure (n)
+        evalNorthingId :: Char -> Except String Char
+        evalNorthingId n | n < 'A' || n > 'Z' || n == 'I' || n == 'O' = throwError ("Invalid northingId (" ++ show n ++ ")")
+                         | otherwise = pure (n)
 
+
+{-|
+  Create a new MGRS reference object from the given String. Must be correctly
+  formatted otherwise an IllegalArgumentException will be thrown.
+-}
+mkMGRSRef' :: String -- ^ A String to create an MGRS reference from.
+              -> Except String MGRSRef -- ^ Throws an exception if the given String is not correctly formatted.
+mkMGRSRef' ref = do
+  groups <- withExcept (const "Invalid easting") (evalRefMatch ref)
+  let
+      group = head groups
+      en = group !! 5
+      enlh = length en `div` 2
+      p = 10 ^ (5 - enlh)
+  pure MGRSRef { easting = p * (read (take enlh en) :: Int)
+               , northing = p * (read (drop enlh en) :: Int)
+               , eastingId = (group !! 3) !! 0
+               , northingId = (group !! 4) !! 0
+               , utmZoneNumber = read (group !! 1) :: Int
+               , utmZoneChar =  (group !! 2) !! 0
+               , precision = toEnum p
+               , isBessel = False
+               , datum = wgs84Datum }
+
+
+  where evalRefMatch :: String -> Except String [[String]]
+        evalRefMatch ref = do
+          let groups = ref =~ "(\\d{1,2})((?![IO])[C-X])((?![IO])[A-Z])((?![IO])[A-Z])(\\d{2,10})" :: [[String]]
+          case groups of
+            [] -> throwError ("No matches")
+            [_,_,_,_,_,en]
+              | odd $ length en -> throwError ("Invalid ref")
+              | otherwise -> pure groups
+            _ -> pure groups
+
+
+-- | Convert this MGRS reference to an equivelent UTM reference.
+toUTMRef :: MGRSRef -> Except String U.UTMRef
+toUTMRef (MGRSRef easting northing eastingId northingId utmZoneNumber utmZoneChar _ _ _) = do
+  let
+      set = (utmZoneNumber - 1) `mod` 6 + 1
+      isOffset = even set
+
+      e = (\x -> if (x > 9) then x - 1 else x)
+          . (\x -> if (x > 15) then x - 1 else x)
+          $ ord eastingId - 65
+      ex = (easting + ((e `mod` 8 + 1) * 100000)) `mod` 1000000
+
+      n = (\x -> if (x < 0) then x + 16 else x)
+          . (\x -> if isOffset then x - 5 else x)
+          . (\x -> if (x > 9) then x - 1 else x)
+          . (\x -> if (x > 15) then x - 1 else x)
+          $ ord northingId - 64
+
+      nn = case utmZoneChar of
+             'Q'
+               | (not(isOffset) && northingId < 'T') || (isOffset && (northingId < 'C' || northingId > 'E')) -> 2000000
+               | otherwise -> 0
+             'R' -> 2000000
+             'S'
+               | (not(isOffset) && northingId < 'R') || (isOffset && northingId > 'E') -> 4000000
+               | otherwise -> 2000000
+             'T' -> 4000000
+             'U'
+               | (not(isOffset) && northingId < 'P') || (isOffset && northingId > 'U') -> 6000000
+               | otherwise -> 4000000
+             'V' -> 6000000
+             'W' -> 6000000
+             'X' -> 8000000
+
+      nx = nn + (100000 * (n - 1)) + northing
+  U.mkUTMRef (fromIntegral ex) (fromIntegral nx) utmZoneChar utmZoneNumber

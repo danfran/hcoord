@@ -28,6 +28,7 @@ library
       UTMRef
   build-depends:       base >= 4.7 && < 5
                      , mtl
+                     , regex-pcre
   default-language:    Haskell2010
 
 executable hcoord-exe

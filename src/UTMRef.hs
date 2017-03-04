@@ -103,7 +103,7 @@ toUTMRef (LatLng latitude longitude _ datum) =
          longitudeOrigin = fromIntegral $ 6 * longitudeZone - 183 :: Double
          longitudeOriginRad = longitudeOrigin * pifr
 
-         utmZone = UTMRef.getUTMLatitudeZoneLetter lt
+         utmZone = getUTMLatitudeZoneLetter lt
 
          ePrimeSquared = eSquared / (1 - eSquared)
 

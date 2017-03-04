@@ -1,3 +1,182 @@
+{-|
+  To represent an Ordnance Survey of Great Britain (OSGB) grid reference.
+
+  British National Grid
+  Projection: Transverse Mercator
+  Reference ellipsoid: Airy 1830
+  Units: metres
+  Origin: 49&deg;N, 2&deg;W
+  False co-ordinates of origin: 400000m east, -100000m north
+  
+  A full reference includes a two-character code identifying a particular
+  100,000m grid square. The table below shows how the two-character 100,000m
+  grid squares are identified. The bottom left corner is at the false origin of
+  the grid. Squares without values fall outside the boundaries of the British
+  National Grid.
+
+   km
+  0
+  100
+  200
+  300
+  400
+  500
+  600
+  700
+  
+  
+  1200
+  HL
+  HM
+  HN
+  HO
+  HP
+  JL
+  JM
+   
+  
+  
+  1100
+  HQ
+  HR
+  HS
+  HT
+  HU
+  JQ
+  JR
+   
+  
+  
+  1000
+  HV
+  HW
+  HX
+  HY
+  HZ
+  JV
+  JW
+   
+  
+  
+   900
+  NA
+  NB
+  NC
+  ND
+  NE
+  OA
+  OB
+   
+  
+  
+   800
+  NF
+  NG
+  NH
+  NJ
+  NK
+  OF
+  OG
+  OH
+  
+  
+   700
+  NL
+  NM
+  NN
+  NO
+  NP
+  OL
+  OM
+  ON
+  
+  
+   600
+  NQ
+  NR
+  NS
+  NT
+  NU
+  OQ
+  OR
+  OS
+  
+  
+   500
+   
+  NW
+  NX
+  NY
+  NZ
+  OV
+  OW
+  OX
+  
+  
+   400
+   
+  SB
+  SC
+  SD
+  SE
+  TA
+  TB
+  TC
+  
+  
+   300
+   
+  SG
+  SH
+  SJ
+  SK
+  TF
+  TG
+  TH
+  
+  
+   200
+   
+  SM
+  SN
+  SO
+  SP
+  TL
+  TM
+  TN
+  
+  
+   100
+  SQ
+  SR
+  SS
+  ST
+  SU
+  TQ
+  TR
+  TS
+  
+  
+   0
+  SV
+  SW
+  SX
+  SY
+  SZ
+  TV
+  TW
+   
+  
+  Within each 100,000m square, the grid is further subdivided into 1000m
+  squares. These 1km squares are shown on Ordnance Survey 1:25000 and 1:50000
+  mapping as the main grid. To reference a 1km square, give the easting and
+  then the northing, e.g. TR2266. In this example, TR represents the 100,000m
+  square, 22 represents the easting (in km) and 66 represents the northing (in
+  km). This is commonly called a four-figure grid reference.
+  
+  When providing local references, the 2 characters representing the 100,000m
+  square are often omitted.
+-}
 module OSRef where
 
 import Control.Monad.Except
