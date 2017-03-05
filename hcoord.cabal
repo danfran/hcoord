@@ -1,5 +1,5 @@
 name:                hcoord
-version:             0.1.0.0
+version:             1.0.0.0
 synopsis:            Easily convert between latitude/longitude, Universal Transverse Mercator (UTM) and Ordnance Survey (OSGB) references with Haskell.
 description:         Please see README.md
 homepage:            https://github.com/danfran/hcoord#readme

@@ -25,7 +25,7 @@ mkUTMRef :: Double -- ^ The easting in metres
          -> Double -- ^ The northing in metres
          -> Char -- ^ The latitude zone character
          -> Int -- ^ The longitude zone number
-         -> Except String UTMRef -- | If any of the parameters are invalid. Be careful that a valid
+         -> Except String UTMRef -- ^ If any of the parameters are invalid. Be careful that a valid
                                  --   value for the easting does not necessarily mean that the UTM
                                  --   reference is well-formed. The current checks do not take into
                                  --   account the varying range of valid values for the easting for
