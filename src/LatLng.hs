@@ -1,6 +1,10 @@
 -- | To represent a latitude/longitude pair based on a particular datum.
 module LatLng where
 
+#if __GLASGOW_HASKELL__ < 710
+import Control.Applicative
+#endif
+
 import Control.Monad.Except
 import Datum
 import Ellipsoid
