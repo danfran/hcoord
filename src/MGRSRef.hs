@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-|
   To represent a Military Grid Reference System (MGRS) reference.
 
@@ -62,6 +63,10 @@
   Svalbard and Norway.
 -}
 module MGRSRef where
+
+#if __GLASGOW_HASKELL__ < 710
+import Control.Applicative
+#endif
 
 import Control.Monad.Except
 import Data.Char

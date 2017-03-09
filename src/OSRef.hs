@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-|
   To represent an Ordnance Survey of Great Britain (OSGB) grid reference.
 
@@ -178,6 +179,10 @@
   square are often omitted.
 -}
 module OSRef where
+
+#if __GLASGOW_HASKELL__ < 710
+import Control.Applicative
+#endif
 
 import Control.Monad.Except
 import Data.Char

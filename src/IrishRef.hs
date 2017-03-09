@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-|
   To represent an Irish National Grid reference.
 
@@ -8,6 +9,10 @@
   False co-ordinates of origin: 200000m east, 250000m north
 -}
 module IrishRef where
+
+#if __GLASGOW_HASKELL__ < 710
+import Control.Applicative
+#endif
 
 import Control.Monad.Except
 import Data.Char
