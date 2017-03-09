@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 -- | To represent a latitude/longitude pair based on a particular datum.
 module LatLng where
 
