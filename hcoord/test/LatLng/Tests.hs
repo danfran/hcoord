@@ -6,13 +6,11 @@ import Equals
 
 import Datum
 import LatLng
-import OSRef
 
 latlngTests :: Test
 latlngTests = TestList [
     TestLabel "wgs84" testToWGS84
     , TestLabel "datum" testToDatum
-    , TestLabel "osgb36" testToOSGB36
     , TestLabel "distance" testDistance
     , TestLabel "distance miles" testDistanceMiles
     , TestLabel "latitude degrees" testLatitudeDegrees
@@ -29,9 +27,6 @@ testToDatum = TestList [
     , (toDatum (LatLng 52.657570301933156 1.717921580645096 0 wgs84Datum) wgs84Datum) ~?= LatLng 52.657570301933156 1.717921580645096 0 wgs84Datum
     , (toDatum (LatLng 53.364040027777776 (-6.3480328055555555) 0 etrf89Datum) ireland1965Datum) ~?= LatLng 53.36292074510271 (-6.348982169358832) 0 etrf89Datum
     ]
-
-testToOSGB36 :: Test
-testToOSGB36 = (toOSGB36 $ LatLng 52.657570301933 1.7179215806451 0 osgb36Datum) ~?= LatLng 52.65716471196846 1.7197915435062723 0 osgb36Datum
 
 testDistance :: Test
 testDistance = (distance (LatLng 40.718119 (-73.995667) 0 wgs84Datum) (LatLng 51.499981 (-0.125313) 0 wgs84Datum)) ~?= 5565.842734813126

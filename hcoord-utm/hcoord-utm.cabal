@@ -1,0 +1,78 @@
+-- This file has been generated from package.yaml by hpack version 0.20.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 93491cde92f1006daefc48fc571a4e29eccc0b4314065b8138e7e1a2254ef961
+
+name:           hcoord-utm
+version:        1.0.0.0
+synopsis:       Easily convert between latitude/longitude, UTM and OSGB.
+description:    Please see README.md
+category:       geography
+homepage:       https://github.com/danfran/hcoord#readme
+bug-reports:    https://github.com/https://github.com/danfran/hcoord/issues
+author:         Daniele Francesconi
+maintainer:     dfrancesconi12@gmail.com
+copyright:      copyleft
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+cabal-version:  >= 1.10
+
+extra-source-files:
+    package.yaml
+    README.md
+    stack.yaml
+
+source-repository head
+  type: git
+  location: https://github.com/https://github.com/danfran/hcoord
+
+library
+  hs-source-dirs:
+      src
+  ghc-options: -Wall
+  build-depends:
+      base >=4 && <5
+    , hcoord
+    , mtl
+  exposed-modules:
+      UTMRef
+  other-modules:
+      Paths_hcoord_utm
+  default-language: Haskell2010
+
+test-suite hcoord-utm-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  hs-source-dirs:
+      test
+      src
+  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      HUnit >=1.2 && <1.6
+    , base
+    , data-default
+    , hcoord
+    , ieee754
+    , mtl
+  other-modules:
+      Equals
+      HUnitExtensions
+      UTMRef.Tests
+      UTMRef
+      Paths_hcoord_utm
+  default-language: Haskell2010
+
+test-suite hlint-test
+  type: exitcode-stdio-1.0
+  main-is: HLint.hs
+  hs-source-dirs:
+      hlint
+  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base
+    , hlint
+  other-modules:
+      Paths_hcoord_utm
+  default-language: Haskell2010

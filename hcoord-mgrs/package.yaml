@@ -12,21 +12,14 @@ library:
   - base >=4 && <5
   - mtl
   - regex-pcre
+  - hcoord
+  - hcoord-utm
   source-dirs: src
   exposed-modules:
-  - Datum
-  - DMS
-  - ECEFRef
-  - Ellipsoid
-  - IrishRef
-  - LatLng
-  - MathExtensions
   - MGRSRef
-  - OSRef
-  - UTMRef
 author: Daniele Francesconi
 maintainer: dfrancesconi12@gmail.com
-name: hcoord
+name: hcoord-mgrs
 synopsis: Easily convert between latitude/longitude, UTM and OSGB.
 description: Please see README.md
 homepage: https://github.com/danfran/hcoord#readme
@@ -35,24 +28,15 @@ license: BSD3
 license-file: LICENSE
 copyright: copyleft
 github: https://github.com/danfran/hcoord
-executables:
-  hcoord-exe:
-    dependencies:
-    - base
-    - hcoord
-    ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
-    main: Main.hs
-    source-dirs: app
 tests:
-  hcoord-test:
+  hcoord-mgrs-test:
     dependencies:
     - base
     - HUnit >= 1.2 && < 1.6
     - hcoord
+    - hcoord-utm
     - mtl
+    - regex-pcre
     - ieee754
     - data-default
     ghc-options:
@@ -62,6 +46,7 @@ tests:
     main: Spec.hs
     source-dirs:
     - test
+    - src
   hlint-test:
     dependencies:
     - base
