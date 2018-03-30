@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: be71c2bf1f51fe32220bd43371bc878d57a02d6419f7382c5eb3aeef406188f0
+-- hash: b025513d701f4f3f2315bbb89b906d2beac159c1a73936538715957c84d77e51
 
 name:           hcoord
 version:        1.0.0.0
@@ -86,5 +86,18 @@ test-suite hcoord-test
       MGRSRef.Tests
       OSRef.Tests
       UTMRef.Tests
+      Paths_hcoord
+  default-language: Haskell2010
+
+test-suite hlint-test
+  type: exitcode-stdio-1.0
+  main-is: HLint.hs
+  hs-source-dirs:
+      hlint
+  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base
+    , hlint
+  other-modules:
       Paths_hcoord
   default-language: Haskell2010
