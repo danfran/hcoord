@@ -1,0 +1,59 @@
+-- This file has been generated from package.yaml by hpack version 0.20.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: ca91187fc95285c82264a84db2c1cb7774007315205e5d981d9a9cd0132545ee
+
+name:           build-hcoord
+version:        0.1.0
+synopsis:       A shake build of hcoord.
+description:    Builds the hcoord and hcoord-* packages.
+category:       Build
+homepage:       https://github.com/danfran/hcoord#readme
+bug-reports:    https://github.com/danfran/hcoord/issues
+author:         Phil de Joux
+maintainer:     phil.dejoux@blockscope.com
+license:        BSD3
+license-file:   LICENSE.md
+build-type:     Simple
+cabal-version:  >= 1.10
+
+extra-source-files:
+    package.yaml
+    readme.md
+    stack.yaml
+
+source-repository head
+  type: git
+  location: https://github.com/danfran/hcoord
+  subdir: build
+
+executable build-hcoord
+  main-is: Main.hs
+  hs-source-dirs:
+      app-cmd
+  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      ansi-terminal
+    , base
+    , shake
+    , time
+  other-modules:
+      Cmd
+      Driver
+      Target
+      Paths_build_hcoord
+  default-language: Haskell2010
+
+test-suite hlint
+  type: exitcode-stdio-1.0
+  main-is: HLint.hs
+  hs-source-dirs:
+      test-suite-hlint
+  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base
+    , hlint
+  other-modules:
+      Paths_build_hcoord
+  default-language: Haskell2010
