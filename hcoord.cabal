@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: efabf9adfe5bdd416df5f6442be3817b56a14fae534f5dbda47bf08f2b6c7654
+-- hash: be71c2bf1f51fe32220bd43371bc878d57a02d6419f7382c5eb3aeef406188f0
 
 name:           hcoord
 version:        1.0.0.0
@@ -47,6 +47,18 @@ library
       MGRSRef
       OSRef
       UTMRef
+  other-modules:
+      Paths_hcoord
+  default-language: Haskell2010
+
+executable hcoord-exe
+  main-is: Main.hs
+  hs-source-dirs:
+      app
+  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base
+    , hcoord
   other-modules:
       Paths_hcoord
   default-language: Haskell2010
