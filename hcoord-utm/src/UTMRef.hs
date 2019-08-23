@@ -10,6 +10,7 @@ import Control.Monad.Except
 import Datum
 import Ellipsoid
 import LatLng
+import qualified LatLng as LatLng
 import MathExtensions
 
 data UTMRef = UTMRef { easting :: Double -- ^ Easting
@@ -82,8 +83,17 @@ toLatLng (UTMRef east north ltz lnz datum) = do
                 + (5 - 2 * c + 28 * t - 3 * c ** 2 + 8 * ePrimeSquared + 24 * t ** 2)
                 * d ** 5 / 120) / cos phi1Rad) * 180 / pi
 
-  mkLatLng latitude longitude 0 wgs84Datum
-
+  utmLL latitude longitude 0 wgs84Datum
+  where
+    utmLL :: Double -> Double -> Double -> Datum -> Except String LatLng
+    utmLL lat lng h dtm = do
+      lt <- withExcept (const $ "Latitude (" ++ show lat ++ ") is invalid. Converting from UTM, it must be between -80.0 and 84.0 inclusive.") (validateLatitude lat)
+      pure LatLng { latitude = lt, longitude = lng, height = h, LatLng.datum = dtm }
+      where
+            validateLatitude :: Double -> Except String Double
+            validateLatitude l
+              | l < -80.0 || l > 84.0 = throwError "Invalid latitude from UTM"
+              | otherwise = pure l
 
 {-|
   Convert latitude and longitude to a UTM reference.
