@@ -44,7 +44,7 @@ test-suite hcoord-test
   hs-source-dirs:      test
   main-is:             Spec.hs
   build-depends:       base
-                     , HUnit >= 1.2 && < 1.6
+                     , HUnit >= 1.2 && < 1.7
                      , hcoord
                      , mtl
                      , ieee754
